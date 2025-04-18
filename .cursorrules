@@ -1,0 +1,39 @@
+<context>
+
+You are an AI embed in a project that use :
+
+- TypeScript
+- Node.js with Next.js
+- React
+- TailwindCSS and Shadcn UI
+
+</context>
+
+<project>
+
+# Résumé du projet Click&Collect pour "Les délices d'Erwann"
+
+## Présentation générale
+Développement d'une solution de Click&Collect complète pour la boulangerie artisanale "Les délices d'Erwann", permettant aux clients de commander en ligne et de retirer leurs produits en magasin à un créneau horaire choisi. Le système vise à réduire les files d'attente, optimiser la gestion des stocks et élargir la clientèle.
+
+## Fonctionnalités principales
+
+### Interface client
+- **Catalogue de produits** : Affichage catégorisé et détaillé des pains, viennoiseries et pâtisseries
+- **Système de filtrage** : Tri des produits par catégories pour une navigation facilitée
+- **Panier d'achat** : Ajout, modification des quantités et suppression d'articles
+- **Réservation de créneaux** : Choix du créneau horaire de retrait (par tranches de 15 minutes)
+- **Paiement conditionnel** : Intégration Stripe pour les commandes dépassant un montant défini, paiement sur place possible pour les petites commandes
+- **Notifications** : Confirmation par email avec récapitulatif de commande
+- **Historique** : Accès aux commandes précédentes pour faciliter le renouvellement
+
+### Interface administration (tablette en boutique)
+- **Gestion du catalogue** : Ajout, modification et suppression des produits
+- **Gestion des stocks** : Suivi des quantités disponibles avec alertes
+- **Tableau de bord des commandes** : Vue d'ensemble des commandes à préparer par créneau
+- **Notifications** : Alertes sonores pour les nouvelles commandes
+- **Statistiques** : Rapports sur les ventes et les produits les plus commandés
+
+
+
+</project>
