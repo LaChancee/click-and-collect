@@ -1,21 +1,21 @@
 export const SiteConfig = {
-  title: "NOW.TS",
-  description: "Collect and showcase powerful video and text testimonials",
-  prodUrl: "https://demo.nowts.app",
-  domain: "demo.nowts.app",
+  title: "Les délices d'Erwann",
+  description: "Click and collect pour les délices d'Erwann",
+  prodUrl: "https://les-delices-d-erwann.vercel.app",
+  domain: "les-delices-d-erwann.vercel.app",
   appIcon: "/images/icon.png",
   company: {
-    name: "NowTS",
+    name: "Les délices d'Erwann",
     address: "", // Remove if not needed
   },
   brand: {
     primary: "#007291", // You can adjust this to your brand color
   },
   team: {
-    image: "https://melvynx.com/images/me/twitter-en.jpg",
-    website: "https://melvynx.com",
-    twitter: "https://twitter.com/melvyn_me",
-    name: "Melvynx",
+    image: "",
+    website: "https://miharisoa.fr",
+    twitter: "",
+    name: "Miharisoa",
   },
   features: {
     /**
