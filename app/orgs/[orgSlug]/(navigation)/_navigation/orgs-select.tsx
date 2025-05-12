@@ -85,7 +85,7 @@ export const OrgsSelect = (props: OrganizationsSelectProps) => {
                   </DropdownMenuItem>
                 );
               })}
-            <DropdownMenuItem
+           {/* <DropdownMenuItem
               onClick={() => {
                 router.push("/orgs/new");
               }}
@@ -94,7 +94,7 @@ export const OrgsSelect = (props: OrganizationsSelectProps) => {
               <span className="line-clamp-1 text-left">
                 Add a new organization
               </span>
-            </DropdownMenuItem>
+            </DropdownMenuItem> */ }
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

@@ -12,6 +12,204 @@ datasource db {
   directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
+// Catalogue de produits
+model Category {
+  id          String  @id @default(nanoid(11))
+  name        String
+  slug        String  @unique
+  description String?
+  image       String?
+  position    Int     @default(0)
+  isActive    Boolean @default(true)
+
+  // Relation avec la boulangerie
+  bakeryId String
+  bakery   Organization @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+
+  // Relations
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id          String  @id @default(nanoid(11))
+  name        String
+  slug        String  @unique
+  description String?
+  price       Decimal @db.Decimal(10, 2)
+  image       String?
+  isActive    Boolean @default(true)
+  isAvailable Boolean @default(true)
+  stockCount  Int? // Pour produits à quantité limitée
+  position    Int     @default(0)
+
+  // Relation avec la catégorie
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  // Relation avec la boulangerie
+  bakeryId String
+  bakery   Organization @relation("BakeryProducts", fields: [bakeryId], references: [id], onDelete: Cascade)
+
+  // Relations
+  allergens     ProductAllergen[]
+  orderItems    OrderItem[]
+  favoriteItems FavoriteItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Allergen {
+  id          String  @id @default(nanoid(11))
+  name        String  @unique
+  description String?
+
+  // Relations
+  products ProductAllergen[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProductAllergen {
+  productId  String
+  allergenId String
+
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  allergen Allergen @relation(fields: [allergenId], references: [id], onDelete: Cascade)
+
+  @@id([productId, allergenId])
+}
+
+model FavoriteItem {
+  id String @id @default(nanoid(11))
+
+  // Relation avec Client (Organization)
+  customerId String
+  customer   Organization @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  // Relation avec Product
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([customerId, productId])
+}
+
+// Système de créneaux horaires
+model TimeSlot {
+  id        String   @id @default(nanoid(11))
+  startTime DateTime
+  endTime   DateTime
+  maxOrders Int      @default(10)
+  isActive  Boolean  @default(true)
+
+  // Relation avec la boulangerie
+  bakeryId String
+  bakery   Organization @relation(fields: [bakeryId], references: [id])
+
+  // Relations
+  orders Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Système de commandes
+model Order {
+  id              String         @id @default(nanoid(11))
+  orderNumber     String         @unique
+  totalAmount     Decimal        @db.Decimal(10, 2)
+  status          OrderStatus    @default(PENDING)
+  paymentStatus   PaymentStatus  @default(PENDING)
+  paymentMethod   PaymentMethod?
+  paymentIntentId String?
+  notes           String?
+
+  // Pour les commandes anonymes
+  isGuestOrder Boolean @default(false)
+  guestEmail   String?
+  guestPhone   String?
+  guestName    String?
+
+  // Relation avec Client (Organization) - rendue optionnelle
+  customerId String?
+  customer   Organization? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  // Relation avec TimeSlot
+  timeSlotId String
+  timeSlot   TimeSlot    @relation(fields: [timeSlotId], references: [id])
+  items      OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CARD_ONLINE
+  CARD_INSTORE
+  CASH_INSTORE
+}
+
+model OrderItem {
+  id        String  @id @default(nanoid(11))
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+  notes     String?
+
+  // Relation avec Order
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  // Relation avec Product
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Configuration et paramètres
+model Settings {
+  id                String   @id @default(nanoid(11))
+  minOrderValue     Decimal? @db.Decimal(10, 2)
+  maxOrdersPerSlot  Int      @default(10)
+  storeOpenTime     String // Format HH:MM
+  storeCloseTime    String // Format HH:MM
+  timeSlotDuration  Int      @default(15) // En minutes
+  preOrderDaysAhead Int      @default(3)
+  paymentThreshold  Decimal? @db.Decimal(10, 2) // Montant minimal pour paiement en ligne obligatoire
+
+  // Relation avec la boulangerie
+  bakeryId String       @unique
+  bakery   Organization @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Feedback et avis
 model Feedback {
   id      String  @id @default(nanoid(11))
   review  Int

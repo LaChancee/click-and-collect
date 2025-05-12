@@ -8,6 +8,7 @@ import {
   CreditCard,
   Home,
   Settings,
+  ShoppingCart,
   TriangleAlert,
   User,
   User2,
@@ -57,6 +58,11 @@ export const ORGANIZATION_LINKS: NavigationGroup[] = [
         Icon: User,
         label: "Users",
       },
+      {
+        href: `${ORGANIZATION_PATH}/articles`,
+        Icon: ShoppingCart,
+        label: "Articles",
+      },  
     ],
   },
   {
@@ -68,18 +74,7 @@ export const ORGANIZATION_LINKS: NavigationGroup[] = [
         Icon: Settings,
         label: "Settings",
       },
-      {
-        href: `${ORGANIZATION_PATH}/settings/members`,
-        Icon: User2,
-        label: "Members",
-        roles: ["admin"],
-      },
-      {
-        href: `${ORGANIZATION_PATH}/settings/billing`,
-        label: "Billing",
-        roles: ["admin"],
-        Icon: CreditCard,
-      },
+    
       {
         href: `${ORGANIZATION_PATH}/settings/danger`,
         label: "Danger Zone",

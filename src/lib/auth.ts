@@ -136,89 +136,17 @@ export const auth = betterAuth({
     organization({
       ac: ac,
       roles: roles,
-      organizationLimit: 5,
-      membershipLimit: 10,
-      async sendInvitationEmail({ id, email }) {
-        const inviteLink = `${getServerUrl()}/orgs/accept-invitation/${id}`;
-        await sendEmail({
-          to: email,
-          subject: "You are invited to join an organization",
-          react: MarkdownEmail({
-            preview: `Join an organization on ${SiteConfig.title}`,
-            markdown: `
-            Hello,
-
-            You have been invited to join an organization on ${SiteConfig.title}.
-
-            [Click here to accept the invitation](${inviteLink})
-            `,
-          }),
-        });
-      },
-    }),
-    stripePlugin({
-      stripeClient: stripe,
-      stripeWebhookSecret: env.STRIPE_WEBHOOK_SECRET ?? "",
-      createCustomerOnSignUp: true,
-      subscription: {
-        onSubscriptionUpdate: async ({ event, subscription }) => {
-          const object = event.data.object as Stripe.Subscription;
-          const priceId = object.items.data[0].price.id;
-
-          const matchingPlan = AUTH_PLANS.find(
-            (p) => p.annualDiscountPriceId === priceId || p.priceId === priceId,
-          );
-
-          if (!matchingPlan) {
-            logger.error("No matching plan found", { event, subscription });
-            return;
-          }
-
-          if (subscription.plan === matchingPlan.name) {
-            return;
-          }
-
-          // Sync the subscription plan with the matching plan
-          await prisma.subscription.update({
-            where: { id: subscription.id },
-            data: {
-              plan: matchingPlan.name,
-            },
-          });
+      // Définit la limit d'organization à 1
+      organizationLimit: 1,
+      // Définit la limit de membership à 1
+      membershipLimit: 1,
+      schema: {
+        organization: {
+          fields: {
+            email: "string",
+          },
         },
-        authorizeReference: async ({ user, referenceId }) => {
-          const member = await prisma.member.findFirst({
-            where: {
-              userId: user.id,
-              organizationId: referenceId,
-            },
-          });
-
-          return member?.role === "owner" || member?.role === "admin";
-        },
-        enabled: true,
-        plans: AUTH_PLANS,
       },
-    }),
-    magicLink({
-      sendMagicLink: async ({ email, url }) => {
-        await sendEmail({
-          to: email,
-          subject: "Sign in to your account",
-          react: MarkdownEmail({
-            preview: `Magic link to login ${SiteConfig.title}`,
-            markdown: `
-            Hello,
-
-            You requested a magic link to sign in to your account.
-
-            [Click here to sign in](${url})
-            `,
-          }),
-        });
-      },
-    }),
-    // Warning: always last plugin
-    nextCookies(),
-  ],
+    })
+  ]
 });

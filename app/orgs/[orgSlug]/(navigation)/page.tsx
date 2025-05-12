@@ -24,18 +24,7 @@ export default async function RoutePage(
       <LayoutHeader>
         <LayoutTitle>Dashboard</LayoutTitle>
       </LayoutHeader>
-      <LayoutActions>
-        {(await hasPermission({
-          member: ["create"],
-        })) ? (
-          <Link
-            href={`/orgs/${params.orgSlug}/settings/members`}
-            className={buttonVariants({ variant: "outline" })}
-          >
-            Invite member
-          </Link>
-        ) : null}
-      </LayoutActions>
+      
       <LayoutContent className="flex flex-col gap-4 lg:gap-8">
         <InformationCards />
         <SubscribersChart />

@@ -49,25 +49,19 @@ export const getCurrentOrg = async (params?: OrgParams) => {
     }
   }
 
-  const subscriptions = await auth.api.listActiveSubscriptions({
+  const subscriptions = await auth.api.listSessions({
     headers: await headers(),
     query: {
       referenceId: org.id,
     },
   });
 
-  const currentSubscription = subscriptions.find(
-    (s) =>
-      s.referenceId === org.id &&
-      (s.status === "active" || s.status === "trialing"),
-  );
 
   return {
     ...org,
     user: user.user,
     email: (org.email ?? null) as string | null,
-    memberRoles: memberRoles,
-    subscription: currentSubscription ?? null,
+      memberRoles: memberRoles,
   };
 };
 
