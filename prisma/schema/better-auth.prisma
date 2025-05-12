@@ -95,7 +95,7 @@ model Organization {
   isSubscribed  Boolean   @default(true) // Pour notifications promotionnelles
 
   // Relations pour les boulangeries
-  products   Product[]  @relation("BakeryProducts")
+  articles   Article[]  @relation("BakeryArticles")
   categories Category[]
   timeSlots  TimeSlot[]
   settings   Settings?

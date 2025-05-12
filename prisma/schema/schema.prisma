@@ -27,13 +27,13 @@ model Category {
   bakery   Organization @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
 
   // Relations
-  products Product[]
+  articles Article[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Product {
+model Article {
   id          String  @id @default(nanoid(11))
   name        String
   slug        String  @unique
@@ -51,7 +51,7 @@ model Product {
 
   // Relation avec la boulangerie
   bakeryId String
-  bakery   Organization @relation("BakeryProducts", fields: [bakeryId], references: [id], onDelete: Cascade)
+  bakery   Organization @relation("BakeryArticles", fields: [bakeryId], references: [id], onDelete: Cascade)
 
   // Relations
   allergens     ProductAllergen[]
@@ -75,13 +75,13 @@ model Allergen {
 }
 
 model ProductAllergen {
-  productId  String
+  articleId  String
   allergenId String
 
-  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  article  Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
   allergen Allergen @relation(fields: [allergenId], references: [id], onDelete: Cascade)
 
-  @@id([productId, allergenId])
+  @@id([articleId, allergenId])
 }
 
 model FavoriteItem {
@@ -92,13 +92,13 @@ model FavoriteItem {
   customer   Organization @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   // Relation avec Product
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  articleId String
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([customerId, productId])
+  @@unique([customerId, articleId])
 }
 
 // Système de créneaux horaires
@@ -183,8 +183,8 @@ model OrderItem {
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   // Relation avec Product
-  productId String
-  product   Product @relation(fields: [productId], references: [id])
+  articleId String
+  article   Article @relation(fields: [articleId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
