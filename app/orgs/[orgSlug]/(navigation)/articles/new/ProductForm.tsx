@@ -2,7 +2,7 @@
 
 import { Form, FormMessage, FormControl, FormField, FormItem, FormLabel, useZodForm } from "@/components/ui/form";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { defaultProductValues, ProductFormSchemaType, ProductSchemaForm } from "./product.schema";
 import { createProduct } from "./product.action";
@@ -10,21 +10,47 @@ import { toast } from "sonner";
 import { Card, CardTitle, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SubmitButton } from "@/features/form/submit-button";
+import { prisma } from "@/lib/prisma";
+import { useState, useEffect } from "react";
+
+type Category = {
+  id: string;
+  name: string;
+}
 
 export function ProductForm({ orgSlug }: { orgSlug: string }) {
   const router = useRouter();
+  const [categories, setCategories] = useState<Category[]>([
+    { id: "cat1", name: "Pains" },
+    { id: "cat2", name: "Viennoiseries" },
+    { id: "cat3", name: "Pâtisseries" },
+    { id: "cat4", name: "Sandwichs" },
+    { id: "cat5", name: "Boissons" }
+  ]);
+
+  // Récupérer les catégories au chargement du composant
+ 
+
   const form = useZodForm({
     schema: ProductSchemaForm,
     defaultValues: {
       ...defaultProductValues,
+      orgId: orgSlug,
     }
   });
 
   const mutation = useMutation({
     mutationFn: async (values: ProductFormSchemaType) => {
+    },
+    onSuccess: () => {
+      toast.success("Produit créé avec succès");
+      router.push(`/orgs/${orgSlug}/articles`);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erreur lors de la création du produit");
     }
   });
 
@@ -33,7 +59,6 @@ export function ProductForm({ orgSlug }: { orgSlug: string }) {
       form={form}
       className="flex flex-col gap-6"
       onSubmit={async (values) => {
-        console.log("Données du formulaire:", values);
         await mutation.mutateAsync(values);
       }}
     >
@@ -110,7 +135,17 @@ export function ProductForm({ orgSlug }: { orgSlug: string }) {
                       <SelectValue placeholder="Sélectionnez une catégorie" />
                     </SelectTrigger>
                   </FormControl>
-
+                  <SelectContent>
+                    {categories.length === 0 ? (
+                      <SelectItem value="empty" disabled>Aucune catégorie disponible</SelectItem>
+                    ) : (
+                      categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
                 </Select>
                 <FormMessage />
               </FormItem>
@@ -208,7 +243,7 @@ export function ProductForm({ orgSlug }: { orgSlug: string }) {
         </CardContent>
         <CardFooter>
           <SubmitButton
-           type="submit" disabled={mutation.isPending}>
+            type="submit" disabled={mutation.isPending }>
             Créer le produit
           </SubmitButton>
         </CardFooter>
