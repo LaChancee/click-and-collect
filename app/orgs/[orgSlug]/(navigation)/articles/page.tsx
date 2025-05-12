@@ -13,61 +13,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { ProductColumns, type ProductTableItem } from "./_components/columns";
+import { DataTable } from "./_components/DataTable";
+import { Heading, EmptyState } from "./_components/UIComponents";
 
 import { prisma } from "@/lib/prisma";
-// Composants qui seront à créer séparément
-const DataTable = ({ columns, data, filterColumn, searchPlaceholder, categoriesMap, baseUrl }: any) => {
-  return (
-    <div>
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder={searchPlaceholder}
-          className="w-full max-w-sm p-2 border rounded-md"
-        />
-      </div>
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="bg-gray-100">
-            {columns.map((column: any) => (
-              <th key={column.id || column.accessorKey} className="p-2 text-left">
-                {typeof column.header === 'function'
-                  ? column.header({ column })
-                  : column.header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((row: any, i: number) => (
-            <tr key={i} className="border-t">
-              {columns.map((column: any) => (
-                <td key={column.id || column.accessorKey} className="p-2">
-                  {column.cell ? column.cell({ row: { original: row, getValue: (key: string) => row[key] } }) : row[column.accessorKey]}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-};
-
-const Heading = ({ title, description }: { title: string, description: string }) => (
-  <div>
-    <h1 className="text-2xl font-bold">{title}</h1>
-    <p className="text-gray-500">{description}</p>
-  </div>
-);
-
-const EmptyState = ({ title, description, action }: { title: string, description: string, action: React.ReactNode }) => (
-  <div className="text-center p-8 border rounded-lg">
-    <h3 className="font-medium text-lg">{title}</h3>
-    <p className="text-gray-500 mb-4">{description}</p>
-    {action}
-  </div>
-);
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -78,13 +27,11 @@ export default async function ArticlesPage({
   params: { orgSlug: string };
 }) {
   const { orgSlug } = await params;
-   const currentOrg = await prisma.organization.findUnique({
+  const currentOrg = await prisma.organization.findUnique({
     where: {
       slug: orgSlug,
     },
-   })
-
-  ;
+  });
 
   if (!currentOrg) {
     redirect("/orgs");
@@ -224,7 +171,7 @@ export default async function ArticlesPage({
                   acc[category.id] = category.name;
                   return acc;
                 }, {} as Record<string, string>)}
-                  baseUrl={`/orgs/${orgSlug}/articles`}
+                baseUrl={`/orgs/${orgSlug}/articles`}
               />
             </CardContent>
           </Card>
@@ -248,7 +195,7 @@ export default async function ArticlesPage({
                   acc[category.id] = category.name;
                   return acc;
                 }, {} as Record<string, string>)}
-                  baseUrl={`/orgs/${orgSlug}/articles`}
+                baseUrl={`/orgs/${orgSlug}/articles`}
               />
             </CardContent>
           </Card>

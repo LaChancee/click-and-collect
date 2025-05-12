@@ -1,3 +1,5 @@
+'use client';
+
 import React from "react";
 import { ArrowUpDown, MoreHorizontal, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +15,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnDef } from "@tanstack/react-table";
 import { formatCurrency } from "@/lib/utils";
+import { useParams } from "next/navigation";
+
 // Type pour les produits formatés pour l'affichage dans la table
 export type ProductTableItem = {
   id: string;
@@ -27,36 +31,61 @@ export type ProductTableItem = {
   createdAt: Date;
 };
 
+// Composant HeaderCell pour le tri
+function HeaderCell({ column, title }: { column: any; title: string }) {
+  return (
+    <Button
+      variant="ghost"
+      onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+    >
+      {title}
+      <ArrowUpDown className="ml-2 h-4 w-4" />
+    </Button>
+  );
+}
+
+// Composant ActionCell séparé pour le menu d'actions
+function ActionCell({ row }: { row: any }) {
+  const params = useParams();
+  const orgSlug = params.orgSlug as string;
+  const product = row.original;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <span className="sr-only">Ouvrir le menu</span>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <a href={`/orgs/${orgSlug}/articles/${product.id}`}>Voir</a>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <a href={`/orgs/${orgSlug}/articles/${product.id}/edit`}>Modifier</a>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild className="text-red-600">
+          <button onClick={() => alert('Cette fonction sera disponible prochainement')}>Supprimer</button>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export const ProductColumns: ColumnDef<ProductTableItem>[] = [
   {
     accessorKey: "name",
-    header: ({ column }: { column: any }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Nom du produit
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }: { row: any }) => <div className="font-medium">{row.getValue("name")}</div>,
+    header: ({ column }) => <HeaderCell column={column} title="Nom du produit" />,
+    cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
   },
   {
     accessorKey: "price",
-    header: ({ column }: { column: any }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Prix
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }: { row: any }) => {
+    header: ({ column }) => <HeaderCell column={column} title="Prix" />,
+    cell: ({ row }) => {
       return <div>{formatCurrency(parseFloat(row.getValue("price")))}</div>;
     },
   },
@@ -127,33 +156,6 @@ export const ProductColumns: ColumnDef<ProductTableItem>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }: { row: any }) => {
-      const product = row.original;
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Ouvrir le menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <a href={`/articles/${product.id}`}>Voir</a>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <a href={`/articles/${product.id}/edit`}>Modifier</a>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild className="text-red-600">
-              <button>Supprimer</button>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
+    cell: ({ row }) => <ActionCell row={row} />,
   },
 ]; 

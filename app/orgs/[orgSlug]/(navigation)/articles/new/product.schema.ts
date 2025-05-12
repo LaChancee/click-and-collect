@@ -7,11 +7,14 @@ export const ProductSchemaForm = z.object({
   categoryId: z.string().min(1, "La catégorie est requise"),
   isActive: z.boolean().default(true),
   isAvailable: z.boolean().default(true),
-  stockCount: z.union([
-    z.coerce.number().int().min(0, "Le stock doit être un nombre positif"),
-    z.literal("").transform(() => null),
-    z.null()
-  ]).optional().nullable(),
+  stockCount: z
+    .union([
+      z.coerce.number().int().min(0, "Le stock doit être un nombre positif"),
+      z.literal("").transform(() => null),
+      z.null(),
+    ])
+    .optional()
+    .nullable(),
   position: z.coerce.number().int().min(0).optional(),
   allergenIds: z.array(z.string()).default([]),
   image: z.any().optional(),
@@ -21,7 +24,7 @@ export const ProductSchemaForm = z.object({
 export type ProductFormSchemaType = z.infer<typeof ProductSchemaForm>;
 
 export const defaultProductValues: Partial<ProductFormSchemaType> = {
-  name: "", 
+  name: "",
   description: "",
   price: 0,
   categoryId: "",

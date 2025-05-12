@@ -40,7 +40,7 @@ export default async function RouteLayout(
         slug: org.slug,
         name: org.name,
         image: org.logo ?? null,
-        subscription: org.subscription,
+        subscription: null,
       }}
     >
       {props.children}

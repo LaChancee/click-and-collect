@@ -10,13 +10,15 @@ import { ProductForm } from "./ProductForm";
 export default async function RoutePage(props: PageParams<{ orgSlug: string }>) {
   const params = await props.params;
   const orgSlug = params.orgSlug;
+
+  
   return (
     <Layout>
       <LayoutHeader>
-        <LayoutTitle>Nouveau produit</LayoutTitle>
+        <LayoutTitle>Créer un article</LayoutTitle>
       </LayoutHeader>
       <LayoutContent>
-        <ProductForm categories={[]} orgSlug={orgSlug} />
+        <ProductForm orgSlug={orgSlug} />
       </LayoutContent>
     </Layout>
   );

@@ -1,60 +1,30 @@
 'use client'
 
-import { toast } from "sonner";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  useZodForm,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { useRouter } from "next/navigation";
-import { Textarea } from "@/components/ui/textarea";
-import { SubmitButton } from "@/features/form/submit-button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Form, FormMessage, FormControl, FormField, FormItem, FormLabel, useZodForm } from "@/components/ui/form";
+import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { useMutation } from "@tanstack/react-query";
-import { ProductFormSchemaType, ProductSchemaForm, defaultProductValues } from "./product.schema";
+import { useRouter } from "next/navigation";
+import { defaultProductValues, ProductFormSchemaType, ProductSchemaForm } from "./product.schema";
 import { createProduct } from "./product.action";
+import { toast } from "sonner";
+import { Card, CardTitle, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SubmitButton } from "@/features/form/submit-button";
 
-export function ProductForm({ categories, orgSlug }: { categories: { id: string, name: string }[], orgSlug: string}) {
+export function ProductForm({ orgSlug }: { orgSlug: string }) {
   const router = useRouter();
   const form = useZodForm({
     schema: ProductSchemaForm,
     defaultValues: {
       ...defaultProductValues,
-    
     }
   });
 
   const mutation = useMutation({
     mutationFn: async (values: ProductFormSchemaType) => {
-      const result = await createProduct(values);
-      return result;
-    },
-    onError: (error) => {
-      console.error("Erreur de mutation:", error);
-      toast.error(error instanceof Error ? error.message : "Une erreur est survenue");
-    },
-    onSuccess: () => {
-      toast.success("Produit créé avec succès");
-      router.push(`/orgs/${orgSlug}/articles`);
     }
   });
 
@@ -140,13 +110,7 @@ export function ProductForm({ categories, orgSlug }: { categories: { id: string,
                       <SelectValue placeholder="Sélectionnez une catégorie" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+
                 </Select>
                 <FormMessage />
               </FormItem>
@@ -240,11 +204,11 @@ export function ProductForm({ categories, orgSlug }: { categories: { id: string,
             )}
           />
 
-          {/* Le champ orgId est passé automatiquement comme valeur par défaut */}
-          <input type="hidden" {...form.register("orgId")} />
+
         </CardContent>
         <CardFooter>
-          <SubmitButton type="submit" disabled={mutation.isPending}>
+          <SubmitButton
+           type="submit" disabled={mutation.isPending}>
             Créer le produit
           </SubmitButton>
         </CardFooter>

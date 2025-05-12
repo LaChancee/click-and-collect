@@ -6,9 +6,7 @@ import {
   LayoutHeader,
   LayoutTitle,
 } from "@/features/page/layout";
-import { hasPermission } from "@/lib/auth/auth-org";
 import type { PageParams } from "@/types/next";
-import Link from "next/link";
 import InformationCards from "./information-cards";
 import { SubscribersChart } from "./subscribers-charts";
 
