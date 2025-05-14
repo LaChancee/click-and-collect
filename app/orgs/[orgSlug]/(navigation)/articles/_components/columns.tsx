@@ -33,6 +33,7 @@ export type ProductTableItem = {
   allergens: string;
   createdAt: Date | string;
   imageUrl: string | null;
+  slug: string;
 };
 
 // Composant HeaderCell pour le tri
@@ -199,13 +200,8 @@ function ActionCell({ row }: { row: any }) {
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <a href={`/orgs/${orgSlug}/articles/${product.id}`} className="cursor-pointer">
-            Voir
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a href={`/orgs/${orgSlug}/articles/${product.id}/edit`} className="cursor-pointer">
-            Modifier
+          <a href={`/orgs/${orgSlug}/articles/${product.slug}`} className="cursor-pointer">
+            Voir / Modifier
           </a>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

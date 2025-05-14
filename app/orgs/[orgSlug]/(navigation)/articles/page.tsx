@@ -180,6 +180,7 @@ export default async function ArticlesPage({
     allergens: article.allergens.map((pa) => pa.allergen.name).join(", "),
     createdAt: article.createdAt,
     imageUrl: article.imageUrl,
+    slug: article.slug,
   }));
 
   // Definition des colonnes pour DataTable
