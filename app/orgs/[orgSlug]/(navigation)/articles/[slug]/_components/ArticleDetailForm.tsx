@@ -1,25 +1,30 @@
 'use client'
 
-import { Form, FormMessage, FormControl, FormField, FormItem, FormLabel, useZodForm } from "@/components/ui/form";
-import { resolveActionResult } from "@/lib/actions/actions-utils";
-import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { toast } from "sonner";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { LoadingButton } from "@/features/form/submit-button";
-import { ImageUploader } from "../../components/ImageUploader";
-import { z } from "zod";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
-import { updateArticleAction } from "../article.action";
 import { useRouter } from "next/navigation";
+import { useMutation } from "@tanstack/react-query";
+import { z } from "zod";
+import { toast } from "sonner";
+
+// UI Components
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Command } from "@/components/ui/command";
+import { Form, FormMessage, FormControl, FormField, FormItem, FormLabel, useZodForm } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { LoadingButton } from "@/features/form/submit-button";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { MultiSelector, MultiSelectorContent, MultiSelectorInput, MultiSelectorItem, MultiSelectorList, MultiSelectorTrigger } from "@/components/nowts/multi-select";
+
+// Custom components
+import { ImageUploader } from "../../components/ImageUploader";
+
+// Utilities
+import { cn } from "@/lib/utils";
+import { resolveActionResult } from "@/lib/actions/actions-utils";
+import { updateArticleAction } from "../article.action";
 
 // Types needed for the form
 type Category = {
@@ -158,35 +163,55 @@ export function ArticleDetailForm({ article, allergens, categories, orgSlug, org
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Colonne de gauche: Informations générales */}
         <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-medium mb-4">Informations générales</h3>
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nom du produit</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Entrez le nom du produit" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <h3 className="text-lg font-medium">Informations générales</h3>
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nom du produit</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Entrez le nom du produit" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Décrivez le produit..."
+                      className="min-h-[100px]"
+                      {...field}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="description"
+                name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel>Prix (€)</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder="Décrivez le produit..."
-                        className="min-h-[100px]"
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
                         {...field}
-                        value={field.value || ""}
                       />
                     </FormControl>
                     <FormMessage />
@@ -194,118 +219,72 @@ export function ArticleDetailForm({ article, allergens, categories, orgSlug, org
                 )}
               />
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Prix (€)</FormLabel>
+              <FormField
+                control={form.control}
+                name="categoryId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Catégorie</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="0.00"
-                          {...field}
-                        />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionnez une catégorie" />
+                        </SelectTrigger>
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="categoryId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Catégorie</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Sélectionnez une catégorie" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {categories.length === 0 ? (
-                            <SelectItem value="empty" disabled>Aucune catégorie disponible</SelectItem>
-                          ) : (
-                            categories.map((category) => (
-                              <SelectItem key={category.id} value={category.id}>
-                                {category.name}
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="stockCount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Stock (laisser vide pour stock illimité)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        placeholder="Quantité en stock"
-                        {...field}
-                        value={field.value === null ? '' : field.value}
-                        onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="position"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Position d'affichage</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        placeholder="Position"
-                        {...field}
-                      />
-                    </FormControl>
+                      <SelectContent>
+                        {categories.length === 0 ? (
+                          <SelectItem value="empty" disabled>Aucune catégorie disponible</SelectItem>
+                        ) : (
+                          categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-          </div>
-        </div>
 
-        {/* Colonne de droite: Image, statut et allergènes */}
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-medium mb-4">Image du produit</h3>
             <FormField
               control={form.control}
-              name="imageUrl"
+              name="stockCount"
               render={({ field }) => (
                 <FormItem>
+                  <FormLabel>Stock (laisser vide pour stock illimité)</FormLabel>
                   <FormControl>
-                    <ImageUploader
-                      imageUrl={field.value}
-                      onImageUploaded={(url) => field.onChange(url)}
-                      onImageRemoved={() => field.onChange(null)}
-                      uploadOnSubmit={true}
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="Quantité en stock"
+                      {...field}
+                      value={field.value === null ? '' : field.value}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="position"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Position d'affichage</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="Position"
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -313,125 +292,149 @@ export function ArticleDetailForm({ article, allergens, categories, orgSlug, org
               )}
             />
           </div>
+        </div>
 
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Statut du produit</h3>
-            <div className="flex flex-col gap-3">
-              <FormField
-                control={form.control}
-                name="isActive"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        Actif
-                      </FormLabel>
-                      <p className="text-sm text-muted-foreground">
-                        Le produit sera visible dans le catalogue
-                      </p>
-                    </div>
-                  </FormItem>
-                )}
-              />
+        {/* Colonne de droite: Image, statut et allergènes */}
+        <div className="space-y-6">
+          <h3 className="text-lg font-medium">Image du produit</h3>
+          <FormField
+            control={form.control}
+            name="imageUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <ImageUploader
+                    imageUrl={field.value}
+                    onImageUploaded={(url) => field.onChange(url)}
+                    onImageRemoved={() => field.onChange(null)}
+                    uploadOnSubmit={true}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-              <FormField
-                control={form.control}
-                name="isAvailable"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        Disponible
-                      </FormLabel>
-                      <p className="text-sm text-muted-foreground">
-                        Le produit pourra être commandé
-                      </p>
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </div>
+          <Separator className="my-6" />
+
+          <h3 className="text-lg font-medium">Statut du produit</h3>
+          <div className="flex flex-col gap-3">
+            <FormField
+              control={form.control}
+              name="isActive"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      Actif
+                    </FormLabel>
+                    <p className="text-sm text-muted-foreground">
+                      Le produit sera visible dans le catalogue
+                    </p>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="isAvailable"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      Disponible
+                    </FormLabel>
+                    <p className="text-sm text-muted-foreground">
+                      Le produit pourra être commandé
+                    </p>
+                  </div>
+                </FormItem>
+              )}
+            />
           </div>
 
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Allergènes</h3>
-            <div className="border rounded-md p-4">
-              <FormField
-                control={form.control}
-                name="allergenIds"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sélectionner les allergènes présents dans ce produit</FormLabel>
-                    <FormControl>
-                      <MultiSelector
-                        values={selectedAllergens}
-                        onValuesChange={setSelectedAllergens}
-                        className="space-y-2"
-                      >
-                        <MultiSelectorTrigger className="w-full px-2 py-2 h-auto border-input">
-                          <MultiSelectorInput placeholder="Rechercher un allergène..." />
-                        </MultiSelectorTrigger>
-                        <MultiSelectorContent className="w-full bg-white p-0 border rounded-md shadow-md mt-1 max-h-60 overflow-auto">
-                          <MultiSelectorList className="w-full py-1">
-                            <Command className="w-full">
-                              {allergens.map((allergen) => (
-                                <MultiSelectorItem
-                                  key={allergen.id}
-                                  value={allergen.name}
-                                  className="cursor-pointer w-full px-2 py-1.5 hover:bg-slate-100"
-                                >
-                                  <div className="flex flex-col">
-                                    <span>{allergen.name}</span>
-                                    {allergen.description && (
-                                      <span className="text-xs text-muted-foreground">{allergen.description}</span>
-                                    )}
-                                  </div>
-                                </MultiSelectorItem>
-                              ))}
-                              {allergens.length === 0 && (
-                                <div className="py-6 text-center text-sm">
-                                  Aucun allergène disponible
+          <Separator className="my-6" />
+
+          <h3 className="text-lg font-medium">Allergènes</h3>
+          <div className="border rounded-md p-4">
+            <FormField
+              control={form.control}
+              name="allergenIds"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Sélectionner les allergènes présents dans ce produit</FormLabel>
+                  <FormControl>
+                    <MultiSelector
+                      values={selectedAllergens}
+                      onValuesChange={setSelectedAllergens}
+                      className="space-y-2"
+                    >
+                      <MultiSelectorTrigger className="w-full px-2 py-2 h-auto border-input">
+                        <MultiSelectorInput placeholder="Rechercher un allergène..." />
+                      </MultiSelectorTrigger>
+                      <MultiSelectorContent className="w-full bg-white p-0 border rounded-md shadow-md mt-1 max-h-60 overflow-auto">
+                        <MultiSelectorList className="w-full py-1">
+                          <Command className="w-full">
+                            {allergens.map((allergen) => (
+                              <MultiSelectorItem
+                                key={allergen.id}
+                                value={allergen.name}
+                                className="cursor-pointer w-full px-2 py-1.5 hover:bg-slate-100"
+                              >
+                                <div className="flex flex-col">
+                                  <span>{allergen.name}</span>
+                                  {allergen.description && (
+                                    <span className="text-xs text-muted-foreground">{allergen.description}</span>
+                                  )}
                                 </div>
-                              )}
-                            </Command>
-                          </MultiSelectorList>
-                        </MultiSelectorContent>
-                      </MultiSelector>
-                    </FormControl>
-                    <FormMessage />
-                    <div className="mt-2">
-                      <p className="text-sm text-muted-foreground mb-2">Allergènes sélectionnés:</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {selectedAllergens.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">Aucun allergène sélectionné</p>
-                        ) : (
-                          selectedAllergens.map(name => (
-                            <Badge key={name} variant="secondary">{name}</Badge>
-                          ))
-                        )}
-                      </div>
+                              </MultiSelectorItem>
+                            ))}
+                            {allergens.length === 0 && (
+                              <div className="py-6 text-center text-sm">
+                                Aucun allergène disponible
+                              </div>
+                            )}
+                          </Command>
+                        </MultiSelectorList>
+                      </MultiSelectorContent>
+                    </MultiSelector>
+                  </FormControl>
+                  <FormMessage />
+                  <div className="mt-2">
+                    <p className="text-sm text-muted-foreground mb-2">Allergènes sélectionnés:</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedAllergens.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">Aucun allergène sélectionné</p>
+                      ) : (
+                        selectedAllergens.map(name => (
+                          <Badge key={name} variant="secondary">{name}</Badge>
+                        ))
+                      )}
                     </div>
-                  </FormItem>
-                )}
-              />
-            </div>
+                  </div>
+                </FormItem>
+              )}
+            />
           </div>
         </div>
       </div>
 
-      <div className="flex justify-end space-x-4 mt-8">
+      <Separator className="my-6" />
+
+      <div className="flex justify-end space-x-4">
         <LoadingButton
           type="submit"
           loading={mutation.isPending}

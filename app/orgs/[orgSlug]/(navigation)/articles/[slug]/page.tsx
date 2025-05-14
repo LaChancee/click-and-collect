@@ -6,13 +6,24 @@ import {
   LayoutHeader,
   LayoutTitle,
 } from "@/features/page/layout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
-import { notFound } from "next/navigation";
 import { ArticleDetailForm } from "./_components/ArticleDetailForm";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 export default async function ArticleDetailPage(props: PageParams<{ slug: string, orgSlug: string }>) {
   const { slug, orgSlug } = await props.params;
+
+  // Get organization ID first
+  const organization = await prisma.organization.findUnique({
+    where: { slug: orgSlug },
+    select: { id: true }
+  });
+
+  if (!organization) {
+    return notFound();
+  }
 
   // Fetch the article with its category and allergens
   const article = await prisma.article.findUnique({
@@ -39,57 +50,52 @@ export default async function ArticleDetailPage(props: PageParams<{ slug: string
 
   // Fetch all available allergens
   const allergens = await prisma.allergen.findMany({
-    orderBy: { name: 'asc' }
+    orderBy: {
+      name: 'asc'
+    }
   });
 
-  // Get organization
-  const org = await prisma.organization.findFirst({
-    where: {
-      slug: orgSlug,
-    },
-  });
-
-  if (!org) {
-    return notFound();
-  }
-
-  // Get all categories for the organization
+  // Fetch all categories
   const categories = await prisma.category.findMany({
     where: {
-      bakeryId: org.id,
+      bakeryId: organization.id,
+      isActive: true
     },
-    orderBy: { position: "asc" },
+    orderBy: {
+      position: 'asc'
+    }
   });
 
   return (
     <Layout>
       <LayoutHeader>
-        <LayoutTitle>Détails du produit</LayoutTitle>
+        <div className="flex items-center gap-4">
+          <Link
+            href={`/orgs/${orgSlug}/articles`}
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Retour à la liste
+          </Link>
+          <LayoutTitle>
+            Détails du produit: {article.name}
+          </LayoutTitle>
+        </div>
       </LayoutHeader>
       <LayoutContent>
         <Tabs defaultValue="details" className="w-full">
           <TabsList className="mb-4">
-            <TabsTrigger value="details">Informations produit</TabsTrigger>
-            <TabsTrigger value="stats">Statistiques</TabsTrigger>
+            <TabsTrigger value="details">Détails du produit</TabsTrigger>
+            <TabsTrigger value="stats" disabled>Statistiques</TabsTrigger>
           </TabsList>
-          <TabsContent value="details">
-            <Card className="p-6">
-              <ArticleDetailForm
-                article={articleWithNumberPrice}
-                allergens={allergens}
-                categories={categories}
-                orgSlug={orgSlug}
-                orgId={org.id}
-              />
-            </Card>
-          </TabsContent>
-          <TabsContent value="stats">
-            <Card className="p-6">
-              <h3 className="text-lg font-medium mb-2">Statistiques du produit</h3>
-              <p className="text-muted-foreground">
-                Fonctionnalité à venir : statistiques de vente, popularité, etc.
-              </p>
-            </Card>
+          <TabsContent value="details" className="space-y-4">
+            <ArticleDetailForm
+              article={articleWithNumberPrice}
+              allergens={allergens}
+              categories={categories}
+              orgSlug={orgSlug}
+              orgId={organization.id}
+            />
           </TabsContent>
         </Tabs>
       </LayoutContent>

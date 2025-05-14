@@ -5,6 +5,7 @@ import type {
 import type { AuthRole } from "@/lib/auth/auth-permissions";
 import { isInRoles } from "@/lib/organizations/is-in-roles";
 import {
+  AlertCircle,
   CreditCard,
   Home,
   Settings,
@@ -62,7 +63,13 @@ export const ORGANIZATION_LINKS: NavigationGroup[] = [
         href: `${ORGANIZATION_PATH}/articles`,
         Icon: ShoppingCart,
         label: "Articles",
-      },  
+      },
+      {
+        href: `${ORGANIZATION_PATH}/allergens`,
+        Icon: AlertCircle,
+        label: "Allergènes",
+        roles: ["OWNER", "ADMIN"],
+      },
     ],
   },
   {
@@ -74,7 +81,7 @@ export const ORGANIZATION_LINKS: NavigationGroup[] = [
         Icon: Settings,
         label: "Settings",
       },
-    
+
       {
         href: `${ORGANIZATION_PATH}/settings/danger`,
         label: "Danger Zone",
