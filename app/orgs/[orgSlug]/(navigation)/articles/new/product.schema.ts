@@ -18,6 +18,11 @@ export const ArticleSchemaForm = z.object({
   position: z.coerce.number().int().min(0).optional(),
   allergenIds: z.array(z.string()).default([]),
   image: z.any().optional(),
+  imageUrl: z
+    .string()
+    .url("L'URL de l'image est invalide")
+    .optional()
+    .nullable(),
   orgId: z.string().optional(),
 });
 
@@ -33,4 +38,5 @@ export const defaultArticleValues: Partial<ArticleFormSchemaType> = {
   stockCount: null,
   position: 0,
   allergenIds: [],
+  imageUrl: null,
 };

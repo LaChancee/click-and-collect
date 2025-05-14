@@ -20,8 +20,11 @@ function serializeData(data: any) {
 export const createArticleAction = action
   .schema(ArticleSchemaForm)
   .action(async ({ parsedInput, ctx }) => {
+    console.log("Données reçues dans l'action:", parsedInput);
+
     // Supprimer allergenIds et orgId qui n'existent pas dans le modèle Prisma
-    const { allergenIds, orgId, ...articleData } = parsedInput;
+    // Attention: on conserve imageUrl qui doit être sauvegardé en BDD
+    const { allergenIds, orgId, image, ...articleData } = parsedInput;
 
     // Vérifier si orgId existe
     if (!orgId) {
@@ -33,13 +36,21 @@ export const createArticleAction = action
     const baseSlug = parsedInput.name.toLowerCase().replace(/ /g, "-");
     const slug = `${baseSlug}-${timestamp}`;
 
+    // S'assurer que l'URL de l'image est bien prise en compte
+    const dataToSave = {
+      ...articleData,
+      bakeryId: orgId,
+      slug: slug,
+      // Explicitement inclure imageUrl s'il est présent
+      ...(parsedInput.imageUrl ? { imageUrl: parsedInput.imageUrl } : {}),
+    };
+
+    console.log("Données à enregistrer en BDD:", dataToSave);
+
     const result = await prisma.article.create({
-      data: {
-        ...articleData,
-        bakeryId: orgId, // Maintenant orgId ne peut pas être undefined
-        slug: slug,
-      },
+      data: dataToSave,
     });
+
     return serializeData(result);
   });
 

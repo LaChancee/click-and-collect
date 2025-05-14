@@ -40,6 +40,7 @@ model Article {
   description String?
   price       Decimal @db.Decimal(10, 2)
   image       String?
+  imageUrl    String?
   isActive    Boolean @default(true)
   isAvailable Boolean @default(true)
   stockCount  Int? // Pour produits à quantité limitée

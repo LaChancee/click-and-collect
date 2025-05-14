@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Search, MoreHorizontal, ArrowUpDown } from "lucide-react";
+import { Search, MoreHorizontal, ArrowUpDown, PencilIcon, Save, XCircle, CircleSlash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
@@ -15,6 +15,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useParams } from "next/navigation";
+import { useMutation } from "@tanstack/react-query";
+import { resolveActionResult } from "@/lib/actions/actions-utils";
+import { updateStockAction } from "../update-stock.action";
+import { toast } from "sonner";
 
 // Composant HeaderCell pour le tri
 function HeaderCell({ title }: { title: string }) {
@@ -22,6 +26,120 @@ function HeaderCell({ title }: { title: string }) {
     <div className="flex items-center">
       {title}
       <ArrowUpDown className="ml-2 h-3.5 w-3.5 opacity-50" />
+    </div>
+  );
+}
+
+// Composant d'édition du stock
+function EditableStockCell({ row }: { row: any }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [stockValue, setStockValue] = useState<string | null>(row.stockCount === null ? null : String(row.stockCount));
+
+  const updateStockMutation = useMutation({
+    mutationFn: async ({ stockCount }: { stockCount: number | null }) => {
+      return resolveActionResult(updateStockAction({
+        articleId: row.id,
+        stockCount
+      }));
+    },
+    onSuccess: () => {
+      toast.success("Stock mis à jour");
+      setIsEditing(false);
+    },
+    onError: (error) => {
+      toast.error("Erreur lors de la mise à jour du stock: " + error.message);
+    }
+  });
+
+  const isAvailable = row.isAvailable;
+
+  if (!isAvailable) {
+    return (
+      <Badge variant="outline" className="font-normal text-xs border-red-200 text-red-700 bg-red-50">
+        <CircleSlash className="h-3 w-3 mr-1 stroke-[2.5]" />
+        Non disponible
+      </Badge>
+    );
+  }
+
+  const handleSave = () => {
+    const newStock = stockValue === null || stockValue === "" ? null : parseInt(stockValue);
+    updateStockMutation.mutate({ stockCount: newStock });
+  };
+
+  const handleCancel = () => {
+    setStockValue(row.stockCount === null ? null : String(row.stockCount));
+    setIsEditing(false);
+  };
+
+  if (isEditing) {
+    return (
+      <div className="flex items-center gap-2">
+        <Input
+          type="number"
+          value={stockValue === null ? '' : stockValue}
+          onChange={(e) => setStockValue(e.target.value === '' ? null : e.target.value)}
+          className="h-8 w-20 text-sm"
+          placeholder="Illimité"
+          min="0"
+          autoFocus
+          disabled={updateStockMutation.isPending}
+        />
+        <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0"
+            onClick={handleSave}
+            disabled={updateStockMutation.isPending}
+          >
+            <Save className="h-3.5 w-3.5" />
+            <span className="sr-only">Enregistrer</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0"
+            onClick={handleCancel}
+            disabled={updateStockMutation.isPending}
+          >
+            <XCircle className="h-3.5 w-3.5" />
+            <span className="sr-only">Annuler</span>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Display mode
+  const stockCount = row.stockCount;
+
+  return (
+    <div className="flex items-center justify-between gap-2 group">
+      <div>
+        {stockCount === null ? (
+          <span className="text-sm text-muted-foreground">Illimité</span>
+        ) : parseInt(stockCount as string) <= 0 ? (
+          <Badge variant="outline" className="font-normal text-xs border-red-200 text-red-700 bg-red-50">
+            Rupture
+          </Badge>
+        ) : parseInt(stockCount as string) < 10 ? (
+          <Badge variant="outline" className="font-normal text-xs border-amber-200 text-amber-700 bg-amber-50">
+            {stockCount} restant(s)
+          </Badge>
+        ) : (
+          <span className="text-sm">{stockCount} en stock</span>
+        )}
+      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+        onClick={() => setIsEditing(true)}
+      >
+        <PencilIcon className="h-3.5 w-3.5" />
+        <span className="sr-only">Modifier</span>
+      </Button>
     </div>
   );
 }
@@ -128,34 +246,7 @@ export function DataTable({
     }
 
     if (accessorKey === "stockCount") {
-      const stockCount = row[accessorKey];
-      const isAvailable = row.isAvailable;
-
-      if (!isAvailable) {
-        return (
-          <Badge variant="outline" className="font-normal text-xs border-red-200 text-red-700 bg-red-50">
-            Non disponible
-          </Badge>
-        );
-      }
-
-      return (
-        <div>
-          {stockCount === null ? (
-            <span className="text-sm text-muted-foreground">Illimité</span>
-          ) : parseInt(stockCount as string) <= 0 ? (
-            <Badge variant="outline" className="font-normal text-xs border-red-200 text-red-700 bg-red-50">
-              Rupture
-            </Badge>
-          ) : parseInt(stockCount as string) < 10 ? (
-            <Badge variant="outline" className="font-normal text-xs border-amber-200 text-amber-700 bg-amber-50">
-              {stockCount} restant(s)
-            </Badge>
-          ) : (
-            <span className="text-sm">{stockCount} en stock</span>
-          )}
-        </div>
-      );
+      return <EditableStockCell row={row} />;
     }
 
     if (column.id === "actions") {
