@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
 import { toast } from "sonner";
+import { X } from "lucide-react";
 
 // UI Components
 import { Badge } from "@/components/ui/badge";
@@ -59,8 +60,8 @@ type Article = {
   categoryId: string;
   category: Category;
   allergens: ProductAllergen[];
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 };
 
 // Schema for the update form
@@ -102,15 +103,35 @@ type ArticleDetailFormProps = {
 
 export function ArticleDetailForm({ article, allergens, categories, orgSlug, orgId }: ArticleDetailFormProps) {
   const router = useRouter();
-  const [selectedAllergens, setSelectedAllergens] = useState<string[]>(
-    article.allergens.map(a => a.allergen.name)
-  );
 
-  // Map allergen names to IDs for form submission
+  // Map pour accéder aux allergènes par leur ID
+  const allergenMap = new Map<string, Allergen>();
+  allergens.forEach(allergen => {
+    allergenMap.set(allergen.id, allergen);
+  });
+
+  // Map pour retrouver l'ID d'un allergène à partir de son nom
   const allergenNameToIdMap = new Map<string, string>();
   allergens.forEach(allergen => {
     allergenNameToIdMap.set(allergen.name, allergen.id);
   });
+
+  // État pour les allergènes sélectionnés (initialiser avec les noms extraits des IDs)
+  const [selectedAllergenNames, setSelectedAllergenNames] = useState<string[]>(
+    article.allergens.map(a => {
+      const allergen = allergenMap.get(a.allergenId);
+      return allergen ? allergen.name : "";
+    }).filter(Boolean)
+  );
+
+  // État pour le filtrage des allergènes
+  const [allergenFilter, setAllergenFilter] = useState<string>("");
+
+  // Filtrer les allergènes en fonction de la recherche
+  const filteredAllergens = allergens.filter(allergen =>
+    allergen.name.toLowerCase().includes(allergenFilter.toLowerCase()) ||
+    (allergen.description && allergen.description.toLowerCase().includes(allergenFilter.toLowerCase()))
+  );
 
   const form = useZodForm({
     schema: ArticleUpdateSchema,
@@ -132,8 +153,8 @@ export function ArticleDetailForm({ article, allergens, categories, orgSlug, org
 
   const mutation = useMutation({
     mutationFn: async (values: ArticleUpdateFormType) => {
-      // Map selected allergen names to IDs
-      const allergenIds = selectedAllergens
+      // Convertir les noms d'allergènes en IDs
+      const allergenIds = selectedAllergenNames
         .map(name => allergenNameToIdMap.get(name))
         .filter(Boolean) as string[];
 
@@ -377,50 +398,92 @@ export function ArticleDetailForm({ article, allergens, categories, orgSlug, org
                 <FormItem>
                   <FormLabel>Sélectionner les allergènes présents dans ce produit</FormLabel>
                   <FormControl>
-                    <MultiSelector
-                      values={selectedAllergens}
-                      onValuesChange={setSelectedAllergens}
-                      className="space-y-2"
-                    >
-                      <MultiSelectorTrigger className="w-full px-2 py-2 h-auto border-input">
-                        <MultiSelectorInput placeholder="Rechercher un allergène..." />
-                      </MultiSelectorTrigger>
-                      <MultiSelectorContent className="w-full bg-white p-0 border rounded-md shadow-md mt-1 max-h-60 overflow-auto">
-                        <MultiSelectorList className="w-full py-1">
-                          <Command className="w-full">
-                            {allergens.map((allergen) => (
-                              <MultiSelectorItem
-                                key={allergen.id}
-                                value={allergen.name}
-                                className="cursor-pointer w-full px-2 py-1.5 hover:bg-slate-100"
+                    <div className="space-y-4">
+                      {/* Zone de recherche */}
+                      <Input
+                        type="text"
+                        placeholder="Filtrer les allergènes..."
+                        value={allergenFilter}
+                        onChange={(e) => setAllergenFilter(e.target.value)}
+                        className="mb-2"
+                      />
+
+                      {/* Liste des allergènes */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 border rounded-md">
+                        {filteredAllergens.map((allergen) => {
+                          const isSelected = selectedAllergenNames.includes(allergen.name);
+                          return (
+                            <div
+                              key={allergen.id}
+                              className={cn(
+                                "flex items-start gap-2 p-2 rounded cursor-pointer hover:bg-muted transition-colors",
+                                isSelected && "bg-muted/50"
+                              )}
+                            >
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    // Ajouter l'allergène s'il n'est pas déjà sélectionné
+                                    if (!selectedAllergenNames.includes(allergen.name)) {
+                                      setSelectedAllergenNames(prev => [...prev, allergen.name]);
+                                    }
+                                  } else {
+                                    // Retirer l'allergène s'il est sélectionné
+                                    setSelectedAllergenNames(prev =>
+                                      prev.filter(name => name !== allergen.name)
+                                    );
+                                  }
+                                }}
+                                id={`allergen-${allergen.id}`}
+                              />
+                              <label
+                                htmlFor={`allergen-${allergen.id}`}
+                                className="flex flex-col cursor-pointer flex-1"
                               >
-                                <div className="flex flex-col">
-                                  <span>{allergen.name}</span>
-                                  {allergen.description && (
-                                    <span className="text-xs text-muted-foreground">{allergen.description}</span>
-                                  )}
-                                </div>
-                              </MultiSelectorItem>
-                            ))}
-                            {allergens.length === 0 && (
-                              <div className="py-6 text-center text-sm">
-                                Aucun allergène disponible
-                              </div>
-                            )}
-                          </Command>
-                        </MultiSelectorList>
-                      </MultiSelectorContent>
-                    </MultiSelector>
+                                <span className="font-medium">{allergen.name}</span>
+                                {allergen.description && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {allergen.description}
+                                  </span>
+                                )}
+                              </label>
+                            </div>
+                          );
+                        })}
+                        {allergens.length === 0 && (
+                          <div className="py-6 text-center text-sm">
+                            Aucun allergène disponible
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </FormControl>
                   <FormMessage />
-                  <div className="mt-2">
+                  <div className="mt-4">
                     <p className="text-sm text-muted-foreground mb-2">Allergènes sélectionnés:</p>
                     <div className="flex flex-wrap gap-1.5">
-                      {selectedAllergens.length === 0 ? (
+                      {selectedAllergenNames.length === 0 ? (
                         <p className="text-sm text-muted-foreground">Aucun allergène sélectionné</p>
                       ) : (
-                        selectedAllergens.map(name => (
-                          <Badge key={name} variant="secondary">{name}</Badge>
+                        selectedAllergenNames.map(name => (
+                          <Badge
+                            key={name}
+                            variant="secondary"
+                            className="flex items-center gap-1"
+                          >
+                            {name}
+                            <button
+                              type="button"
+                              className="ml-1 rounded-full outline-none focus:shadow-outline-green"
+                              onClick={() => setSelectedAllergenNames(prev =>
+                                prev.filter(n => n !== name)
+                              )}
+                            >
+                              <span className="sr-only">Supprimer</span>
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
                         ))
                       )}
                     </div>

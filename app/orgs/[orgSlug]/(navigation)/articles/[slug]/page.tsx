@@ -42,10 +42,12 @@ export default async function ArticleDetailPage(props: PageParams<{ slug: string
     return notFound();
   }
 
-  // Convert Decimal price to number for the component
-  const articleWithNumberPrice = {
+  // Sérialiser l'article pour le composant client
+  const serializedArticle = {
     ...article,
-    price: Number(article.price)
+    price: Number(article.price),
+    createdAt: article.createdAt.toISOString(),
+    updatedAt: article.updatedAt.toISOString(),
   };
 
   // Fetch all available allergens
@@ -90,7 +92,7 @@ export default async function ArticleDetailPage(props: PageParams<{ slug: string
           </TabsList>
           <TabsContent value="details" className="space-y-4">
             <ArticleDetailForm
-              article={articleWithNumberPrice}
+              article={serializedArticle}
               allergens={allergens}
               categories={categories}
               orgSlug={orgSlug}
