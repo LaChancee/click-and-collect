@@ -4,8 +4,7 @@ import { Form, FormMessage, FormControl, FormField, FormItem, FormLabel, useZodF
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { defaultProductValues, ProductFormSchemaType, ProductSchemaForm } from "./product.schema";
-import { createProduct } from "./product.action";
+import { defaultArticleValues, ArticleFormSchemaType, ArticleSchemaForm } from "./product.schema";
 import { toast } from "sonner";
 import { Card, CardTitle, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,44 +12,53 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SubmitButton } from "@/features/form/submit-button";
+import { useEffect, useState } from "react";
+import { createArticle } from "./product.action";
+import { getCategoriesAction, seedBakeryCategories } from "../categories/new/category.action";
 import { prisma } from "@/lib/prisma";
-import { useState, useEffect } from "react";
 
 type Category = {
   id: string;
   name: string;
 }
 
-export function ProductForm({ orgSlug }: { orgSlug: string }) {
+export function ProductForm({ orgSlug, orgId }: { orgSlug: string, orgId: string | undefined }) {
   const router = useRouter();
-  const [categories, setCategories] = useState<Category[]>([
-    { id: "cat1", name: "Pains" },
-    { id: "cat2", name: "Viennoiseries" },
-    { id: "cat3", name: "Pâtisseries" },
-    { id: "cat4", name: "Sandwichs" },
-    { id: "cat5", name: "Boissons" }
-  ]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   // Récupérer les catégories au chargement du composant
- 
+  useEffect(() => {
+    const fetchCategories = async () => {
+        const result = await resolveActionResult(getCategoriesAction({ bakeryId: orgId || "" }));
+        setCategories(result);
+    };
+    fetchCategories();
+  }, [orgId]);
 
   const form = useZodForm({
-    schema: ProductSchemaForm,
+    schema: ArticleSchemaForm,
     defaultValues: {
-      ...defaultProductValues,
-      orgId: orgSlug,
+      ...defaultArticleValues,
+      orgId: orgId,
     }
   });
 
   const mutation = useMutation({
-    mutationFn: async (values: ProductFormSchemaType) => {
+    mutationFn: async (values: ArticleFormSchemaType) => {
+      if (!orgId) {
+        throw new Error("ID de l'organisation non disponible");
+      }
+      return resolveActionResult(createArticle({
+        ...values,
+        orgId,
+      }));
     },
     onSuccess: () => {
-      toast.success("Produit créé avec succès");
+      toast.success("Article créé avec succès");
       router.push(`/orgs/${orgSlug}/articles`);
     },
     onError: (error) => {
-      toast.error(error.message || "Erreur lors de la création du produit");
+      toast.error(error.message || "Erreur lors de la création de l'article");
     }
   });
 
@@ -220,30 +228,11 @@ export function ProductForm({ orgSlug }: { orgSlug: string }) {
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="position"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Position d'affichage</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min="0"
-                    {...field}
-                    value={field.value === undefined ? '0' : field.value}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
 
         </CardContent>
         <CardFooter>
           <SubmitButton
-            type="submit" disabled={mutation.isPending }>
+            type="submit" disabled={mutation.isPending}>
             Créer le produit
           </SubmitButton>
         </CardFooter>

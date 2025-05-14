@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const ProductSchemaForm = z.object({
+export const ArticleSchemaForm = z.object({
   name: z.string().min(1, "Le nom du produit est requis"),
   description: z.string().optional(),
   price: z.coerce.number().min(0, "Le prix doit être positif"),
@@ -18,12 +18,12 @@ export const ProductSchemaForm = z.object({
   position: z.coerce.number().int().min(0).optional(),
   allergenIds: z.array(z.string()).default([]),
   image: z.any().optional(),
-  orgId: z.string().min(1, "L'organisation est requise"),
+  orgId: z.string().optional(),
 });
 
-export type ProductFormSchemaType = z.infer<typeof ProductSchemaForm>;
+export type ArticleFormSchemaType = z.infer<typeof ArticleSchemaForm>;
 
-export const defaultProductValues: Partial<ProductFormSchemaType> = {
+export const defaultArticleValues: Partial<ArticleFormSchemaType> = {
   name: "",
   description: "",
   price: 0,

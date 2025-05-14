@@ -5,7 +5,7 @@ import {
   LayoutTitle,
 } from "@/features/page/layout";
 import type { PageParams } from "@/types/next";
-import { ProductForm } from "./ProductForm";
+import { CategoryForm } from "../CategoryForm";
 import { prisma } from "@/lib/prisma";
 
 export default async function RoutePage(props: PageParams<{ orgSlug: string }>) {
@@ -18,15 +18,14 @@ export default async function RoutePage(props: PageParams<{ orgSlug: string }>) 
     },
   });
 
-
   return (
     <Layout>
       <LayoutHeader>
-        <LayoutTitle>Créer un article</LayoutTitle>
+        <LayoutTitle>Créer une catégorie</LayoutTitle>
       </LayoutHeader>
       <LayoutContent>
-        <ProductForm orgSlug={orgSlug} orgId={org?.id} />
+        <CategoryForm orgSlug={orgSlug} orgId={org?.id} />
       </LayoutContent>
     </Layout>
   );
-}
+} 

@@ -1,5 +1,4 @@
 import React from "react";
-import { redirect } from "next/navigation";
 import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,7 @@ import { DataTable } from "./_components/DataTable";
 import { Heading, EmptyState } from "./_components/UIComponents";
 
 import { prisma } from "@/lib/prisma";
+import { seedBakeryCategories } from "./categories/new/category.action";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -33,19 +33,13 @@ export default async function ArticlesPage({
     },
   });
 
-  if (!currentOrg) {
-    redirect("/orgs");
-  }
-
   // Vérifier la boulangerie en une seule étape
-  if (!currentOrg?.metadata || !JSON.parse(currentOrg.metadata as string).isBakery) {
-    redirect(`/orgs/${orgSlug}`);
-  }
+
 
   // Récupérer les catégories pour le filtrage
   const categories = await prisma.category.findMany({
     where: {
-      bakeryId: currentOrg.id,
+      bakeryId: currentOrg?.id || "",
       isActive: true,
     },
     orderBy: {
@@ -54,9 +48,9 @@ export default async function ArticlesPage({
   });
 
   // Récupérer tous les produits
-  const products = await prisma.product.findMany({
+  const articles = await prisma.article.findMany({
     where: {
-      bakeryId: currentOrg.id,
+      bakeryId: currentOrg?.id || "",
     },
     include: {
       category: true,
@@ -77,17 +71,17 @@ export default async function ArticlesPage({
   });
 
   // Préparation pour le DataTable
-  const formattedProducts: ProductTableItem[] = products.map((product) => ({
-    id: product.id,
-    name: product.name,
-    price: product.price.toString(),
-    category: product.category.name,
-    categoryId: product.categoryId,
-    isActive: product.isActive,
-    isAvailable: product.isAvailable,
-    stockCount: product.stockCount,
-    allergens: product.allergens.map((pa) => pa.allergen.name).join(", "),
-    createdAt: product.createdAt,
+  const formattedArticles: ProductTableItem[] = articles.map((article) => ({
+    id: article.id,
+    name: article.name,
+    price: article.price.toString(),
+    category: article.category.name,
+    categoryId: article.categoryId,
+    isActive: article.isActive,
+    isAvailable: article.isAvailable,
+    stockCount: article.stockCount,
+    allergens: article.allergens.map((pa) => pa.allergen.name).join(", "),
+    createdAt: article.createdAt,
   }));
 
   return (
@@ -97,12 +91,20 @@ export default async function ArticlesPage({
           title="Gestion des articles"
           description="Gérez les produits proposés par votre boulangerie"
         />
-        <Button asChild>
-          <a href={`/orgs/${orgSlug}/articles/new`}>
-            <Plus className="mr-2 h-4 w-4" />
-            Ajouter un produit
-          </a>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <a href={`/orgs/${orgSlug}/articles/categories/new`}>
+              <Plus className="mr-2 h-4 w-4" />
+              Ajouter une catégorie
+            </a>
+          </Button>
+          <Button asChild>
+            <a href={`/orgs/${orgSlug}/articles/new`}>
+              <Plus className="mr-2 h-4 w-4" />
+              Ajouter un produit
+            </a>
+          </Button>
+        </div>
       </div>
       <Separator />
 
@@ -115,7 +117,7 @@ export default async function ArticlesPage({
         </TabsList>
 
         <TabsContent value="all" className="space-y-4">
-          {formattedProducts.length === 0 ? (
+          {formattedArticles.length === 0 ? (
             <EmptyState
               title="Aucun produit"
               description="Vous n'avez pas encore ajouté de produits."
@@ -139,7 +141,7 @@ export default async function ArticlesPage({
               <CardContent>
                 <DataTable
                   columns={ProductColumns}
-                  data={formattedProducts}
+                  data={formattedArticles}
                   filterColumn="name"
                   searchPlaceholder="Rechercher un produit..."
                   categoriesMap={categories.reduce((acc, category) => {
@@ -164,7 +166,7 @@ export default async function ArticlesPage({
             <CardContent>
               <DataTable
                 columns={ProductColumns}
-                data={formattedProducts.filter((p) => p.isActive)}
+                data={formattedArticles.filter((p) => p.isActive)}
                 filterColumn="name"
                 searchPlaceholder="Rechercher un produit..."
                 categoriesMap={categories.reduce((acc, category) => {
@@ -188,7 +190,7 @@ export default async function ArticlesPage({
             <CardContent>
               <DataTable
                 columns={ProductColumns}
-                data={formattedProducts.filter((p) => !p.isActive)}
+                data={formattedArticles.filter((p) => !p.isActive)}
                 filterColumn="name"
                 searchPlaceholder="Rechercher un produit..."
                 categoriesMap={categories.reduce((acc, category) => {
@@ -212,7 +214,7 @@ export default async function ArticlesPage({
             <CardContent>
               <DataTable
                 columns={ProductColumns}
-                data={formattedProducts.filter(
+                data={formattedArticles.filter(
                   (p) => p.stockCount !== null && p.stockCount < 10 && p.isActive
                 )}
                 filterColumn="name"

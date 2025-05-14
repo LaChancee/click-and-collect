@@ -22,6 +22,7 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import type { NewOrganizationSchemaType } from "./new-org.schema";
 import { CreateOrgSchema } from "./new-org.schema";
+import { seedBakeryCategories } from "../[orgSlug]/(navigation)/articles/categories/new/category.action";
 
 export const NewOrganizationForm = () => {
   const form = useZodForm({
@@ -67,6 +68,7 @@ export const NewOrganizationForm = () => {
         name: values.name,
         slug: values.slug,
       });
+      seedBakeryCategories(result?.data?.id || "");
 
       if (result.error) {
         toast.error(result.error.message);

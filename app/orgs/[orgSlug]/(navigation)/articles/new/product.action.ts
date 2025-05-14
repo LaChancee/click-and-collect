@@ -1,20 +1,47 @@
-import {  orgAction } from "@/lib/actions/safe-actions";
+"use server";
+import { action } from "@/lib/actions/safe-actions";
 
 import { prisma } from "@/lib/prisma";
-import { ProductSchemaForm } from "./product.schema";
+import { ArticleSchemaForm } from "./product.schema";
 
-export const createProduct = orgAction
-  .metadata({
-    roles: ["owner", "admin"],
-  })
-  .schema(ProductSchemaForm)
+// Fonction pour sérialiser les objets avec Decimal
+function serializeData(data: any) {
+  return JSON.parse(
+    JSON.stringify(data, (key, value) =>
+      typeof value === "object" &&
+      value !== null &&
+      typeof value.toJSON === "function"
+        ? value.toJSON()
+        : value,
+    ),
+  );
+}
+
+export const createArticleAction = action
+  .schema(ArticleSchemaForm)
   .action(async ({ parsedInput, ctx }) => {
-    const result = await prisma.product.create({
+    // Supprimer allergenIds et orgId qui n'existent pas dans le modèle Prisma
+    const { allergenIds, orgId, ...articleData } = parsedInput;
+
+    // Vérifier si orgId existe
+    if (!orgId) {
+      throw new Error("L'ID de l'organisation est requis");
+    }
+
+    // Générer un slug unique en ajoutant un timestamp
+    const timestamp = Date.now();
+    const baseSlug = parsedInput.name.toLowerCase().replace(/ /g, "-");
+    const slug = `${baseSlug}-${timestamp}`;
+
+    const result = await prisma.article.create({
       data: {
-        ...parsedInput,
-        bakeryId: ctx.id,
-        slug: parsedInput.name.toLowerCase().replace(/ /g, "-"),
+        ...articleData,
+        bakeryId: orgId, // Maintenant orgId ne peut pas être undefined
+        slug: slug,
       },
     });
-    return result;
+    return serializeData(result);
   });
+
+// Exportation de l'ancienne fonction pour compatibilité
+export const createArticle = createArticleAction;
