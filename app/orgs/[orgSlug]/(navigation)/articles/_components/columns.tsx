@@ -1,9 +1,10 @@
 'use client';
 
-import React from "react";
-import { ArrowUpDown, MoreHorizontal, Check, X } from "lucide-react";
+import React, { useState } from "react";
+import { ArrowUpDown, MoreHorizontal, Check, X, CircleSlash, CircleDot, PencilIcon, Save, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +16,8 @@ import {
 import { ColumnDef } from "@tanstack/react-table";
 import { formatCurrency } from "@/lib/utils";
 import { useParams } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 // Type pour les produits formatés pour l'affichage dans la table
 export type ProductTableItem = {
@@ -27,7 +30,7 @@ export type ProductTableItem = {
   isAvailable: boolean;
   stockCount: number | null;
   allergens: string;
-  createdAt: Date;
+  createdAt: Date | string;
 };
 
 // Composant HeaderCell pour le tri
@@ -36,10 +39,143 @@ function HeaderCell({ column, title }: { column: any; title: string }) {
     <Button
       variant="ghost"
       onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      className="hover:bg-transparent p-0 font-medium text-muted-foreground"
     >
       {title}
-      <ArrowUpDown className="ml-2 h-4 w-4" />
+      <ArrowUpDown className="ml-2 h-3.5 w-3.5 opacity-50" />
     </Button>
+  );
+}
+
+// Composant d'édition du stock
+function EditableStockCell({ row, updateStock }: { row: any, updateStock?: (id: string, stock: number | null) => Promise<void> }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [stockValue, setStockValue] = useState<string | null>(row.getValue("stockCount") === null ? null : String(row.getValue("stockCount")));
+  const [isSaving, setIsSaving] = useState(false);
+
+  const isAvailable = row.getValue("isAvailable");
+  const productId = row.original.id;
+
+  if (!isAvailable) {
+    return (
+      <Badge variant="outline" className="font-normal text-xs border-red-200 text-red-700 bg-red-50">
+        <CircleSlash className="h-3 w-3 mr-1 stroke-[2.5]" />
+        Non disponible
+      </Badge>
+    );
+  }
+
+  // Si updateStock n'est pas fourni, afficher seulement la valeur
+  if (!updateStock) {
+    const stockCount = row.getValue("stockCount");
+    return (
+      <div>
+        {stockCount === null ? (
+          <span className="text-sm text-muted-foreground">Illimité</span>
+        ) : parseInt(stockCount as string) <= 0 ? (
+          <Badge variant="outline" className="font-normal text-xs border-red-200 text-red-700 bg-red-50">
+            Rupture
+          </Badge>
+        ) : parseInt(stockCount as string) < 10 ? (
+          <Badge variant="outline" className="font-normal text-xs border-amber-200 text-amber-700 bg-amber-50">
+            {stockCount} restant(s)
+          </Badge>
+        ) : (
+          <span className="text-sm">{stockCount} en stock</span>
+        )}
+      </div>
+    );
+  }
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      const newStock = stockValue === null || stockValue === "" ? null : parseInt(stockValue);
+      await updateStock(productId, newStock);
+      setIsEditing(false);
+      toast.success("Stock mis à jour");
+    } catch (error) {
+      toast.error("Erreur lors de la mise à jour du stock");
+      console.error(error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setStockValue(row.getValue("stockCount") === null ? null : String(row.getValue("stockCount")));
+    setIsEditing(false);
+  };
+
+  if (isEditing) {
+    return (
+      <div className="flex items-center gap-2">
+        <Input
+          type="number"
+          value={stockValue === null ? '' : stockValue}
+          onChange={(e) => setStockValue(e.target.value === '' ? null : e.target.value)}
+          className="h-8 w-20 text-sm"
+          placeholder="Illimité"
+          min="0"
+          autoFocus
+          disabled={isSaving}
+        />
+        <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0"
+            onClick={handleSave}
+            disabled={isSaving}
+          >
+            <Save className="h-3.5 w-3.5" />
+            <span className="sr-only">Enregistrer</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0"
+            onClick={handleCancel}
+            disabled={isSaving}
+          >
+            <XCircle className="h-3.5 w-3.5" />
+            <span className="sr-only">Annuler</span>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Display mode
+  const stockCount = row.getValue("stockCount");
+
+  return (
+    <div className="flex items-center justify-between gap-2 group">
+      <div>
+        {stockCount === null ? (
+          <span className="text-sm text-muted-foreground">Illimité</span>
+        ) : parseInt(stockCount as string) <= 0 ? (
+          <Badge variant="outline" className="font-normal text-xs border-red-200 text-red-700 bg-red-50">
+            Rupture
+          </Badge>
+        ) : parseInt(stockCount as string) < 10 ? (
+          <Badge variant="outline" className="font-normal text-xs border-amber-200 text-amber-700 bg-amber-50">
+            {stockCount} restant(s)
+          </Badge>
+        ) : (
+          <span className="text-sm">{stockCount} en stock</span>
+        )}
+      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+        onClick={() => setIsEditing(true)}
+      >
+        <PencilIcon className="h-3.5 w-3.5" />
+        <span className="sr-only">Modifier</span>
+      </Button>
+    </div>
   );
 }
 
@@ -52,109 +188,159 @@ function ActionCell({ row }: { row: any }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-8 w-8 p-0">
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 data-[state=open]:bg-muted">
           <span className="sr-only">Ouvrir le menu</span>
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="w-[160px]">
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <a href={`/orgs/${orgSlug}/articles/${product.id}`}>Voir</a>
+          <a href={`/orgs/${orgSlug}/articles/${product.id}`} className="cursor-pointer">
+            Voir
+          </a>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <a href={`/orgs/${orgSlug}/articles/${product.id}/edit`}>Modifier</a>
+          <a href={`/orgs/${orgSlug}/articles/${product.id}/edit`} className="cursor-pointer">
+            Modifier
+          </a>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild className="text-red-600">
-          <button onClick={() => alert('Cette fonction sera disponible prochainement')}>Supprimer</button>
+        <DropdownMenuItem className="text-destructive focus:text-destructive">
+          <button onClick={() => alert('Cette fonction sera disponible prochainement')} className="w-full text-left">
+            Supprimer
+          </button>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-export const ProductColumns: ColumnDef<ProductTableItem>[] = [
-  {
-    accessorKey: "name",
-    header: ({ column }) => <HeaderCell column={column} title="Nom du produit" />,
-    cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
-  },
-  {
-    accessorKey: "price",
-    header: ({ column }) => <HeaderCell column={column} title="Prix" />,
-    cell: ({ row }) => {
-      return <div>{formatCurrency(parseFloat(row.getValue("price")))}</div>;
+// Version pour le composant serveur (sans fonction updateStock)
+export function getProductColumns(): ColumnDef<ProductTableItem>[] {
+  return [
+    {
+      accessorKey: "name",
+      header: ({ column }) => <HeaderCell column={column} title="Nom du produit" />,
+      cell: ({ row }) => (
+        <div className="font-medium truncate max-w-[250px]">{row.getValue("name")}</div>
+      ),
     },
-  },
-  {
-    accessorKey: "category",
-    header: "Catégorie",
-    cell: ({ row }: { row: any }) => <div>{row.getValue("category")}</div>,
-    filterFn: (row: any, id: any, value: any) => {
-      return value.includes(row.getValue(id));
+    {
+      accessorKey: "price",
+      header: ({ column }) => <HeaderCell column={column} title="Prix" />,
+      cell: ({ row }) => {
+        return <div className="tabular-nums">{formatCurrency(parseFloat(row.getValue("price")))}</div>;
+      },
     },
-  },
-  {
-    accessorKey: "isActive",
-    header: "Statut",
-    cell: ({ row }: { row: any }) => {
-      const isActive = row.getValue("isActive");
-
-      return isActive ? (
-        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-          <Check className="h-3 w-3 mr-1" /> Actif
+    {
+      accessorKey: "category",
+      header: "Catégorie",
+      cell: ({ row }: { row: any }) => (
+        <Badge variant="secondary" className="font-normal">
+          {row.getValue("category")}
         </Badge>
-      ) : (
-        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-          <X className="h-3 w-3 mr-1" /> Inactif
+      ),
+      filterFn: (row: any, id: any, value: any) => {
+        return value.includes(row.getValue(id));
+      },
+    },
+    {
+      accessorKey: "isActive",
+      header: "Statut",
+      cell: ({ row }: { row: any }) => {
+        const isActive = row.getValue("isActive");
+
+        return (
+          <div className="flex items-center gap-2">
+            {isActive ? (
+              <>
+                <div className="h-2 w-2 rounded-full bg-green-500" />
+                <span className="text-xs font-medium">Actif</span>
+              </>
+            ) : (
+              <>
+                <div className="h-2 w-2 rounded-full bg-red-500" />
+                <span className="text-xs font-medium">Inactif</span>
+              </>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "stockCount",
+      header: "Stock",
+      cell: ({ row }: { row: any }) => <EditableStockCell row={row} />,
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => <ActionCell row={row} />,
+    },
+  ];
+}
+
+// Version pour le composant client (avec fonction updateStock)
+export function getProductColumnsWithUpdate(updateStock: (id: string, stock: number | null) => Promise<void>): ColumnDef<ProductTableItem>[] {
+  return [
+    {
+      accessorKey: "name",
+      header: ({ column }) => <HeaderCell column={column} title="Nom du produit" />,
+      cell: ({ row }) => (
+        <div className="font-medium truncate max-w-[250px]">{row.getValue("name")}</div>
+      ),
+    },
+    {
+      accessorKey: "price",
+      header: ({ column }) => <HeaderCell column={column} title="Prix" />,
+      cell: ({ row }) => {
+        return <div className="tabular-nums">{formatCurrency(parseFloat(row.getValue("price")))}</div>;
+      },
+    },
+    {
+      accessorKey: "category",
+      header: "Catégorie",
+      cell: ({ row }: { row: any }) => (
+        <Badge variant="secondary" className="font-normal">
+          {row.getValue("category")}
         </Badge>
-      );
+      ),
+      filterFn: (row: any, id: any, value: any) => {
+        return value.includes(row.getValue(id));
+      },
     },
-  },
-  {
-    accessorKey: "stockCount",
-    header: "Stock",
-    cell: ({ row }: { row: any }) => {
-      const stockCount = row.getValue("stockCount");
-      const isAvailable = row.getValue("isAvailable");
+    {
+      accessorKey: "isActive",
+      header: "Statut",
+      cell: ({ row }: { row: any }) => {
+        const isActive = row.getValue("isActive");
 
-      if (!isAvailable) {
         return (
-          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-            Non disponible
-          </Badge>
+          <div className="flex items-center gap-2">
+            {isActive ? (
+              <>
+                <div className="h-2 w-2 rounded-full bg-green-500" />
+                <span className="text-xs font-medium">Actif</span>
+              </>
+            ) : (
+              <>
+                <div className="h-2 w-2 rounded-full bg-red-500" />
+                <span className="text-xs font-medium">Inactif</span>
+              </>
+            )}
+          </div>
         );
-      }
-
-      if (stockCount === null) {
-        return <span>Illimité</span>;
-      }
-
-      const count = parseInt(stockCount as string);
-
-      if (count <= 0) {
-        return (
-          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-            Rupture
-          </Badge>
-        );
-      }
-
-      if (count < 10) {
-        return (
-          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-            {count} restant(s)
-          </Badge>
-        );
-      }
-
-      return <span>{count} en stock</span>;
+      },
     },
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => <ActionCell row={row} />,
-  },
-]; 
+    {
+      accessorKey: "stockCount",
+      header: "Stock",
+      cell: ({ row }: { row: any }) => <EditableStockCell row={row} updateStock={updateStock} />,
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => <ActionCell row={row} />,
+    },
+  ];
+} 

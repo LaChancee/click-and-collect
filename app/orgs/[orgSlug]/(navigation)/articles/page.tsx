@@ -1,6 +1,5 @@
 import React from "react";
 import { Plus } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,35 +10,85 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { ProductColumns, type ProductTableItem } from "./_components/columns";
 import { DataTable } from "./_components/DataTable";
 import { Heading, EmptyState } from "./_components/UIComponents";
-
 import { prisma } from "@/lib/prisma";
-import { seedBakeryCategories } from "./categories/new/category.action";
+import { ProductTableItem } from "./_components/columns";
 
+// Définir explicitement le mode dynamique pour éviter la mise en cache
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
 export default async function ArticlesPage({
-  params,
+  params
 }: {
-  params: { orgSlug: string };
+  params: { orgSlug: string }
 }) {
-  const { orgSlug } = await params;
+  // Extraire le slug de l'organisation
+  const orgSlug = await params.orgSlug;
+  console.log("Slug de l'organisation:", orgSlug);
+
+  // Vérifier s'il y a des organisations en base
+  const orgCount = await prisma.organization.count();
+  console.log(`Nombre total d'organisations en base: ${orgCount}`);
+
+  if (orgCount === 0) {
+    console.error("ERREUR: Aucune organisation dans la base de données");
+  }
+
+  // Récupérer les informations de l'organisation
   const currentOrg = await prisma.organization.findUnique({
     where: {
       slug: orgSlug,
     },
   });
 
-  // Vérifier la boulangerie en une seule étape
+  if (!currentOrg) {
+    console.error(`Organisation avec slug '${orgSlug}' non trouvée`);
 
+    // Rechercher l'organisation avec une recherche plus large
+    const similarOrgs = await prisma.organization.findMany({
+      take: 5,
+      where: {
+        slug: {
+          contains: orgSlug.substring(0, 5)
+        }
+      },
+    });
+
+    if (similarOrgs.length > 0) {
+      console.log("Organisations similaires trouvées:", similarOrgs.map(org => ({ id: org.id, slug: org.slug })));
+    }
+
+    return (
+      <div className="container py-6 space-y-6 max-w-7xl mx-auto">
+        <Heading
+          title="Erreur"
+          description="L'organisation demandée n'existe pas"
+        />
+      </div>
+    );
+  }
+
+  console.log("Organisation trouvée:", {
+    id: currentOrg.id,
+    name: currentOrg.name,
+    slug: currentOrg.slug,
+    isBakery: currentOrg.isBakery,
+  });
+
+  // Vérifier s'il y a des catégories en base
+  const allCategoriesCount = await prisma.category.count();
+  console.log(`Nombre total de catégories en base: ${allCategoriesCount}`);
+
+  if (allCategoriesCount === 0) {
+    console.error("ERREUR: Aucune catégorie dans la base de données");
+  }
 
   // Récupérer les catégories pour le filtrage
   const categories = await prisma.category.findMany({
     where: {
-      bakeryId: currentOrg?.id || "",
+      bakeryId: currentOrg.id,
       isActive: true,
     },
     orderBy: {
@@ -47,10 +96,35 @@ export default async function ArticlesPage({
     },
   });
 
+  console.log(`${categories.length} catégories trouvées pour l'organisation ${currentOrg.id}`);
+
+  if (categories.length === 0) {
+    // Vérifier s'il y a des catégories pour cette boulangerie, même inactives
+    const inactiveCategories = await prisma.category.findMany({
+      where: {
+        bakeryId: currentOrg.id,
+      },
+    });
+
+    if (inactiveCategories.length > 0) {
+      console.log(`${inactiveCategories.length} catégories inactives trouvées pour cette organisation`);
+    } else {
+      console.log("Aucune catégorie (même inactive) pour cette organisation");
+    }
+  }
+
+  // Vérifier s'il y a des articles en base
+  const allArticlesCount = await prisma.article.count();
+  console.log(`Nombre total d'articles en base: ${allArticlesCount}`);
+
+  if (allArticlesCount === 0) {
+    console.error("ERREUR: Aucun article dans la base de données");
+  }
+
   // Récupérer tous les produits
   const articles = await prisma.article.findMany({
     where: {
-      bakeryId: currentOrg?.id || "",
+      bakeryId: currentOrg.id,
     },
     include: {
       category: true,
@@ -70,13 +144,36 @@ export default async function ArticlesPage({
     ],
   });
 
-  // Préparation pour le DataTable
-  const formattedArticles: ProductTableItem[] = articles.map((article) => ({
+  console.log(`${articles.length} articles trouvés pour l'organisation ${currentOrg.id}`);
+
+  if (articles.length === 0) {
+    // Vérifier s'il existe des articles dans la base sans filtre
+    const sampleArticles = await prisma.article.findMany({
+      take: 5,
+    });
+
+    if (sampleArticles.length > 0) {
+      console.log("Exemples d'articles en base:", sampleArticles.map(article => ({
+        id: article.id,
+        name: article.name,
+        bakeryId: article.bakeryId
+      })));
+    }
+  }
+
+  // Mapping des catégories pour l'affichage
+  const categoriesMap = categories.reduce((acc, cat) => {
+    acc[cat.id] = cat.name;
+    return acc;
+  }, {} as Record<string, string>);
+
+  // Formatter les données pour le tableau
+  const tableData: ProductTableItem[] = articles.map(article => ({
     id: article.id,
     name: article.name,
     price: article.price.toString(),
-    category: article.category.name,
-    categoryId: article.categoryId,
+    category: article.category?.name || "Sans catégorie",
+    categoryId: article.categoryId || "",
     isActive: article.isActive,
     isAvailable: article.isAvailable,
     stockCount: article.stockCount,
@@ -84,8 +181,36 @@ export default async function ArticlesPage({
     createdAt: article.createdAt,
   }));
 
+  // Definition des colonnes pour DataTable
+  const columns = [
+    {
+      accessorKey: "name",
+      header: "Nom du produit",
+    },
+    {
+      accessorKey: "price",
+      header: "Prix",
+    },
+    {
+      accessorKey: "category",
+      header: "Catégorie",
+    },
+    {
+      accessorKey: "isActive",
+      header: "Statut",
+    },
+    {
+      accessorKey: "stockCount",
+      header: "Stock",
+    },
+    {
+      id: "actions",
+      header: "Actions",
+    }
+  ];
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="container py-6 space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <Heading
           title="Gestion des articles"
@@ -106,128 +231,101 @@ export default async function ArticlesPage({
           </Button>
         </div>
       </div>
-      <Separator />
+      <Separator className="my-6" />
 
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="all">Tous les produits</TabsTrigger>
-          <TabsTrigger value="active">Produits actifs</TabsTrigger>
-          <TabsTrigger value="inactive">Produits inactifs</TabsTrigger>
-          <TabsTrigger value="stock">Stock faible</TabsTrigger>
+          {categories.map((category) => (
+            <TabsTrigger key={category.id} value={category.id}>
+              {category.name}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
-        <TabsContent value="all" className="space-y-4">
-          {formattedArticles.length === 0 ? (
-            <EmptyState
-              title="Aucun produit"
-              description="Vous n'avez pas encore ajouté de produits."
-              action={
-                <Button asChild>
-                  <a href={`/orgs/${orgSlug}/articles/new`}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Ajouter un produit
-                  </a>
-                </Button>
-              }
-            />
-          ) : (
+        <TabsContent value="all" className="mt-0">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle>Tous les produits</CardTitle>
+              <CardDescription>
+                {articles.length} produit{articles.length !== 1 ? 's' : ''} au total
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {articles.length === 0 ? (
+                <EmptyState
+                  title="Aucun produit"
+                  description="Vous n'avez pas encore créé de produits. Commencez par en ajouter un."
+                  action={
+                    <Button asChild>
+                      <a href={`/orgs/${orgSlug}/articles/new`}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Ajouter un produit
+                      </a>
+                    </Button>
+                  }
+                />
+              ) : (
+                <DataTable
+                  columns={columns}
+                  data={tableData}
+                  filterColumn="name"
+                  searchPlaceholder="Rechercher un produit..."
+                  categoriesMap={categoriesMap}
+                  baseUrl={`/orgs/${orgSlug}/articles`}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {categories.map((category) => (
+          <TabsContent key={category.id} value={category.id} className="mt-0">
             <Card>
-              <CardHeader>
-                <CardTitle>Tous les produits</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle>{category.name}</CardTitle>
                 <CardDescription>
-                  Liste complète des produits de votre boulangerie
+                  {articles.filter(
+                    (article) => article.categoryId === category.id
+                  ).length} produit{
+                    articles.filter(
+                      (article) => article.categoryId === category.id
+                    ).length !== 1
+                      ? 's'
+                      : ''
+                  } dans cette catégorie
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <DataTable
-                  columns={ProductColumns}
-                  data={formattedArticles}
-                  filterColumn="name"
-                  searchPlaceholder="Rechercher un produit..."
-                  categoriesMap={categories.reduce((acc, category) => {
-                    acc[category.id] = category.name;
-                    return acc;
-                  }, {} as Record<string, string>)}
-                  baseUrl={`/orgs/${orgSlug}/articles`}
-                />
+                {articles.filter(
+                  (article) => article.categoryId === category.id
+                ).length === 0 ? (
+                  <EmptyState
+                    title="Aucun produit dans cette catégorie"
+                    description="Vous n'avez pas encore ajouté de produits dans cette catégorie."
+                    action={
+                      <Button asChild>
+                        <a href={`/orgs/${orgSlug}/articles/new`}>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Ajouter un produit
+                        </a>
+                      </Button>
+                    }
+                  />
+                ) : (
+                  <DataTable
+                    columns={columns}
+                    data={tableData.filter(article => article.categoryId === category.id)}
+                    filterColumn="name"
+                    searchPlaceholder="Rechercher un produit..."
+                    categoriesMap={categoriesMap}
+                    baseUrl={`/orgs/${orgSlug}/articles`}
+                  />
+                )}
               </CardContent>
             </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="active" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Produits actifs</CardTitle>
-              <CardDescription>
-                Produits actuellement disponibles à la vente
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <DataTable
-                columns={ProductColumns}
-                data={formattedArticles.filter((p) => p.isActive)}
-                filterColumn="name"
-                searchPlaceholder="Rechercher un produit..."
-                categoriesMap={categories.reduce((acc, category) => {
-                  acc[category.id] = category.name;
-                  return acc;
-                }, {} as Record<string, string>)}
-                baseUrl={`/orgs/${orgSlug}/articles`}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="inactive" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Produits inactifs</CardTitle>
-              <CardDescription>
-                Produits temporairement retirés de la vente
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <DataTable
-                columns={ProductColumns}
-                data={formattedArticles.filter((p) => !p.isActive)}
-                filterColumn="name"
-                searchPlaceholder="Rechercher un produit..."
-                categoriesMap={categories.reduce((acc, category) => {
-                  acc[category.id] = category.name;
-                  return acc;
-                }, {} as Record<string, string>)}
-                baseUrl={`/orgs/${orgSlug}/articles`}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="stock" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Stock faible</CardTitle>
-              <CardDescription>
-                Produits disponibles en quantités limitées
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <DataTable
-                columns={ProductColumns}
-                data={formattedArticles.filter(
-                  (p) => p.stockCount !== null && p.stockCount < 10 && p.isActive
-                )}
-                filterColumn="name"
-                searchPlaceholder="Rechercher un produit..."
-                categoriesMap={categories.reduce((acc, category) => {
-                  acc[category.id] = category.name;
-                  return acc;
-                }, {} as Record<string, string>)}
-                baseUrl={`/orgs/${orgSlug}/articles`}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
+          </TabsContent>
+        ))}
       </Tabs>
     </div>
   );
