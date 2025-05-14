@@ -11,12 +11,20 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { SubmitButton } from "@/features/form/submit-button";
-import { useEffect, useState } from "react";
+import { LoadingButton } from "@/features/form/submit-button";
+import { useEffect, useState, useRef } from "react";
 import { createArticle } from "./product.action";
 import { getCategoriesAction, seedBakeryCategories } from "../categories/new/category.action";
 import { prisma } from "@/lib/prisma";
 import { ImageUploader } from "../components/ImageUploader";
+import { Button } from "@/components/ui/button";
+
+// Déclaration du type pour la méthode d'upload exposée via window
+declare global {
+  interface Window {
+    uploadPendingImage?: () => Promise<boolean>;
+  }
+}
 
 type Category = {
   id: string;
@@ -26,6 +34,8 @@ type Category = {
 export function ProductForm({ orgSlug, orgId }: { orgSlug: string, orgId: string | undefined }) {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const imageUploaderRef = useRef<HTMLDivElement>(null);
 
   // Récupérer les catégories au chargement du composant
   useEffect(() => {
@@ -49,8 +59,25 @@ export function ProductForm({ orgSlug, orgId }: { orgSlug: string, orgId: string
       if (!orgId) {
         throw new Error("ID de l'organisation non disponible");
       }
+
+      // Si une image est en attente d'upload, l'uploader maintenant
+      if (window.uploadPendingImage) {
+        setIsSubmitting(true);
+     
+          const wasUploaded = await window.uploadPendingImage();
+          // Attendre juste assez pour que l'URL soit mise à jour
+          if (wasUploaded) {
+            await new Promise(resolve => setTimeout(resolve, 800));
+          }
+      
+      }
+
+      // Récupérer les valeurs actualisées du formulaire
+      const currentValues = form.getValues();
+
+      // Soumettre le formulaire avec les valeurs actualisées
       return resolveActionResult(createArticle({
-        ...values,
+        ...currentValues,
         orgId,
       }));
     },
@@ -59,6 +86,7 @@ export function ProductForm({ orgSlug, orgId }: { orgSlug: string, orgId: string
       router.push(`/orgs/${orgSlug}/articles`);
     },
     onError: (error) => {
+      setIsSubmitting(false);
       toast.error(error.message || "Erreur lors de la création de l'article");
     }
   });
@@ -68,7 +96,12 @@ export function ProductForm({ orgSlug, orgId }: { orgSlug: string, orgId: string
       form={form}
       className="flex flex-col gap-6"
       onSubmit={async (values) => {
-        await mutation.mutateAsync(values);
+        // Utiliser directement les valeurs actualisées du formulaire
+        try {
+          await mutation.mutateAsync(form.getValues());
+        } catch (error) {
+          // Erreur déjà gérée dans le mutation.onError
+        }
       }}
     >
       <Card>
@@ -170,13 +203,14 @@ export function ProductForm({ orgSlug, orgId }: { orgSlug: string, orgId: string
                 control={form.control}
                 name="imageUrl"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem ref={imageUploaderRef}>
                     <FormLabel>Image du produit</FormLabel>
                     <FormControl>
                       <ImageUploader
                         imageUrl={field.value}
                         onImageUploaded={(url) => field.onChange(url)}
                         onImageRemoved={() => field.onChange(null)}
+                        uploadOnSubmit={true}
                       />
                     </FormControl>
                     <FormMessage />
@@ -254,13 +288,19 @@ export function ProductForm({ orgSlug, orgId }: { orgSlug: string, orgId: string
             )}
           />
 
-
         </CardContent>
-        <CardFooter>
-          <SubmitButton
-            type="submit" disabled={mutation.isPending}>
+        <CardFooter className="flex justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push(`/orgs/${orgSlug}/articles`)}
+            disabled={mutation.isPending || isSubmitting}
+          >
+            Annuler
+          </Button>
+          <LoadingButton loading={mutation.isPending || isSubmitting}>
             Créer le produit
-          </SubmitButton>
+          </LoadingButton>
         </CardFooter>
       </Card>
     </Form>

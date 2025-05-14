@@ -4,6 +4,15 @@ const nextConfig = {
     authInterrupts: true,
     nodeMiddleware: true,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "utfs.io",
+        port: "",
+      },
+    ],
+  },
 };
 
 module.exports = nextConfig;

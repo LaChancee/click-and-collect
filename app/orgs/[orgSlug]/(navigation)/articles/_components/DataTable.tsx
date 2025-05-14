@@ -6,6 +6,7 @@ import { Search, MoreHorizontal, ArrowUpDown, PencilIcon, Save, XCircle, CircleS
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
+import Image from "next/image";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -182,6 +183,27 @@ function ActionCell({ row }: { row: any }) {
   );
 }
 
+// Composant pour afficher l'image du produit
+function ImageCell({ imageUrl, name }: { imageUrl: string | null, name: string }) {
+  return (
+    <div className="flex items-center justify-center h-14 w-14 relative">
+      {imageUrl ? (
+        <Image
+          src={imageUrl}
+          alt={name || "Produit"}
+          fill
+          className="object-cover rounded-md"
+          sizes="56px"
+        />
+      ) : (
+        <div className="h-14 w-14 bg-muted rounded-md flex items-center justify-center">
+          <span className="text-xs text-muted-foreground">Aucune image</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function DataTable({
   columns,
   data,
@@ -208,6 +230,11 @@ export function DataTable({
   // Rendu de cellule personnalisé par type
   const renderCell = (column: any, row: any) => {
     const accessorKey = column.accessorKey;
+
+    // Image cell
+    if (column.id === "image") {
+      return <ImageCell imageUrl={row.imageUrl} name={row.name} />;
+    }
 
     // Spécial rendering based on column type
     if (accessorKey === "name") {

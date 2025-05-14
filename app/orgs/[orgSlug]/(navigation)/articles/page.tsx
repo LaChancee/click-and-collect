@@ -179,10 +179,15 @@ export default async function ArticlesPage({
     stockCount: article.stockCount,
     allergens: article.allergens.map((pa) => pa.allergen.name).join(", "),
     createdAt: article.createdAt,
+    imageUrl: article.imageUrl,
   }));
 
   // Definition des colonnes pour DataTable
   const columns = [
+    {
+      id: "image",
+      header: "Image",
+    },
     {
       accessorKey: "name",
       header: "Nom du produit",

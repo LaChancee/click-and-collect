@@ -5,6 +5,7 @@ import { ArrowUpDown, MoreHorizontal, Check, X, CircleSlash, CircleDot, PencilIc
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import Image from "next/image";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +32,7 @@ export type ProductTableItem = {
   stockCount: number | null;
   allergens: string;
   createdAt: Date | string;
+  imageUrl: string | null;
 };
 
 // Composant HeaderCell pour le tri
@@ -217,9 +219,38 @@ function ActionCell({ row }: { row: any }) {
   );
 }
 
+// Composant pour afficher l'image du produit
+function ImageCell({ row }: { row: any }) {
+  const imageUrl = row.original.imageUrl;
+
+  return (
+    <div className="flex items-center justify-center h-14 w-14 relative">
+      {imageUrl ? (
+        <Image
+          src={imageUrl}
+          alt={row.getValue("name") || "Produit"}
+          fill
+          className="object-cover rounded-md"
+          sizes="56px"
+        />
+      ) : (
+        <div className="h-14 w-14 bg-muted rounded-md flex items-center justify-center">
+          <span className="text-xs text-muted-foreground">Aucune image</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Version pour le composant serveur (sans fonction updateStock)
 export function getProductColumns(): ColumnDef<ProductTableItem>[] {
   return [
+    {
+      id: "image",
+      header: "Image",
+      cell: ({ row }) => <ImageCell row={row} />,
+      enableSorting: false,
+    },
     {
       accessorKey: "name",
       header: ({ column }) => <HeaderCell column={column} title="Nom du produit" />,
@@ -284,6 +315,12 @@ export function getProductColumns(): ColumnDef<ProductTableItem>[] {
 // Version pour le composant client (avec fonction updateStock)
 export function getProductColumnsWithUpdate(updateStock: (id: string, stock: number | null) => Promise<void>): ColumnDef<ProductTableItem>[] {
   return [
+    {
+      id: "image",
+      header: "Image",
+      cell: ({ row }) => <ImageCell row={row} />,
+      enableSorting: false,
+    },
     {
       accessorKey: "name",
       header: ({ column }) => <HeaderCell column={column} title="Nom du produit" />,

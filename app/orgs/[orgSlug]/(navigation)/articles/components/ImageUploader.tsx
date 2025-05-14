@@ -15,11 +15,18 @@ interface ImageUploaderProps {
   imageUrl: string | null;
   onImageUploaded: (url: string) => void;
   onImageRemoved: () => void;
+  uploadOnSubmit?: boolean; // Nouveau paramètre pour contrôler quand l'upload a lieu
 }
 
-export function ImageUploader({ imageUrl, onImageUploaded, onImageRemoved }: ImageUploaderProps) {
+export function ImageUploader({
+  imageUrl,
+  onImageUploaded,
+  onImageRemoved,
+  uploadOnSubmit = true // Par défaut, on attend la soumission pour uploader
+}: ImageUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null); // Stocker le fichier en attente
 
   // Utiliser le hook UploadThing
   const { startUpload } = useUploadThing("imageUploader", {
@@ -30,6 +37,7 @@ export function ImageUploader({ imageUrl, onImageUploaded, onImageRemoved }: Ima
         setPreviewUrl(null);
       }
       setIsUploading(false);
+      setPendingFile(null);
     },
     onUploadError: (error) => {
       console.error("Error uploading:", error);
@@ -50,20 +58,45 @@ export function ImageUploader({ imageUrl, onImageUploaded, onImageRemoved }: Ima
       const preview = URL.createObjectURL(file);
       setPreviewUrl(preview);
 
-      // Commencer l'upload
-      await startUpload([file]);
-
-      // Nettoyer l'URL de prévisualisation
-      URL.revokeObjectURL(preview);
+      if (uploadOnSubmit) {
+        // Stocker le fichier pour l'uploader plus tard
+        setPendingFile(file);
+      } else {
+        // Uploader immédiatement
+        await startUpload([file]);
+      }
     },
-    [startUpload]
+    [startUpload, uploadOnSubmit]
   );
 
   // Supprimer l'image
   const handleRemoveImage = useCallback(() => {
     onImageRemoved();
     setPreviewUrl(null);
-  }, [onImageRemoved]);
+    setPendingFile(null);
+
+    // Si l'utilisateur supprime une image prévisualisée, nettoyons l'URL
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+  }, [onImageRemoved, previewUrl]);
+
+  // Fonction pour uploader le fichier en attente (appelée depuis le composant parent lors de la soumission)
+  const uploadPendingFile = async () => {
+    if (pendingFile) {
+     
+        await startUpload([pendingFile]);
+        return true;
+    
+    }
+    return false;
+  };
+
+  // Rendre la méthode d'upload disponible pour le parent
+  if (typeof window !== 'undefined') {
+    // @ts-ignore - Exposer la méthode au parent
+    window.uploadPendingImage = uploadPendingFile;
+  }
 
   // Calculer les tailles de fichier autorisées
   const fileTypes = ["image/jpeg", "image/png"];
@@ -114,7 +147,7 @@ export function ImageUploader({ imageUrl, onImageUploaded, onImageRemoved }: Ima
             accept={fileTypes.join(",")}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
             onChange={handleFileChange}
-            disabled={isUploading || !!previewUrl}
+            disabled={isUploading}
           />
         </CardContent>
       </Card>
@@ -133,6 +166,13 @@ export function ImageUploader({ imageUrl, onImageUploaded, onImageRemoved }: Ima
           {imageUrl || previewUrl ? "Changer d'image" : "Ajouter une image"}
         </Button>
       </div>
+
+      {/* Indicateur d'état */}
+      {pendingFile && (
+        <p className="text-xs text-amber-600 font-medium text-center">
+          L'image sera téléchargée lors de l'enregistrement du produit
+        </p>
+      )}
     </div>
   );
 } 
