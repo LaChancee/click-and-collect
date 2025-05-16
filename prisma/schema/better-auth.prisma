@@ -80,7 +80,7 @@ model Organization {
   members     Member[]
   invitations Invitation[]
   email       String?
-  
+
   // Champs spécifiques pour les boulangeries
   isBakery     Boolean @default(false)
   address      String?
@@ -95,15 +95,16 @@ model Organization {
   isSubscribed  Boolean   @default(true) // Pour notifications promotionnelles
 
   // Relations pour les boulangeries
-  articles   Article[]  @relation("BakeryArticles")
+  articles   Article[]   @relation("BakeryArticles")
   categories Category[]
   timeSlots  TimeSlot[]
   settings   Settings?
+  promotions Promotion[] // Relation avec les promotions
+  mealDeals  MealDeal[] // Relation avec les formules
 
   // Relations pour les clients
   orders        Order[]
   favoriteItems FavoriteItem[]
-
 
   @@unique([slug])
   @@map("organization")

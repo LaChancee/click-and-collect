@@ -58,9 +58,84 @@ model Article {
   allergens     ProductAllergen[]
   orderItems    OrderItem[]
   favoriteItems FavoriteItem[]
+  mealDealItems MealDealItem[] // Relation avec les formules
+  promotions    Promotion[] // Relation avec les promotions
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Nouvelle entité pour les promotions
+model Promotion {
+  id                String       @id @default(nanoid(11))
+  name              String
+  slug              String       @unique
+  description       String?
+  discountType      DiscountType
+  discountValue     Decimal      @db.Decimal(10, 2) // Pourcentage ou montant fixe
+  startDate         DateTime
+  endDate           DateTime
+  isActive          Boolean      @default(true)
+  minimumOrderValue Decimal?     @db.Decimal(10, 2) // Montant minimum pour appliquer la promotion
+
+  // Relation avec la boulangerie
+  bakeryId String
+  bakery   Organization @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+
+  // Relation avec les produits concernés (optionnel - si null, s'applique à tous les produits)
+  articles Article[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+// Nouvelle entité pour les formules (meal deals)
+model MealDeal {
+  id          String  @id @default(nanoid(11))
+  name        String
+  slug        String  @unique
+  description String?
+  price       Decimal @db.Decimal(10, 2) // Prix de la formule
+  image       String?
+  imageUrl    String?
+  isActive    Boolean @default(true)
+  position    Int     @default(0)
+
+  // Relation avec la boulangerie
+  bakeryId String
+  bakery   Organization @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
+
+  // Relation avec les éléments de la formule
+  items MealDealItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Items qui composent une formule
+model MealDealItem {
+  id        String  @id @default(nanoid(11))
+  quantity  Int     @default(1)
+  required  Boolean @default(false) // Si l'article est obligatoire dans la formule
+  groupName String? // Pour regrouper les choix (ex: "Boisson", "Dessert", etc.)
+
+  // Relation avec la formule
+  mealDealId String
+  mealDeal   MealDeal @relation(fields: [mealDealId], references: [id], onDelete: Cascade)
+
+  // Relation avec le produit
+  articleId String
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([mealDealId, articleId, groupName])
 }
 
 model Allergen {
