@@ -86,6 +86,7 @@
     "nuqs": "^2.4.1",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "react": "19.0.0",
+    "react-day-picker": "8.10.1",
     "react-dom": "19.0.0",
     "react-email": "3.0.7",
     "react-hook-form": "^7.54.2",

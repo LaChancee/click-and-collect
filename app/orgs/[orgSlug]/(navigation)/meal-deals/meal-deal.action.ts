@@ -26,7 +26,7 @@ export const createMealDealAction = action
   .action(async ({ parsedInput, ctx }) => {
     const { items, orgId, ...mealDealData } = parsedInput;
 
-    // Générer un slug unique en ajoutant un timestamp
+    // Générer un slug unique
     const timestamp = Date.now();
     const baseSlug = parsedInput.name.toLowerCase().replace(/ /g, "-");
     const slug = `${baseSlug}-${timestamp}`;
@@ -34,7 +34,12 @@ export const createMealDealAction = action
     // Créer la formule avec ses éléments
     const result = await prisma.mealDeal.create({
       data: {
-        ...mealDealData,
+        name: mealDealData.name,
+        description: mealDealData.description || null,
+        price: mealDealData.price,
+        isActive: mealDealData.isActive,
+        position: mealDealData.position || 0,
+        imageUrl: mealDealData.imageUrl,
         bakeryId: orgId,
         slug: slug,
         items: {
@@ -42,7 +47,7 @@ export const createMealDealAction = action
             articleId: item.articleId,
             quantity: item.quantity,
             required: item.required,
-            groupName: item.groupName || null,
+            groupName: null,
           })),
         },
       },
@@ -82,7 +87,7 @@ export const updateMealDealAction = action
             articleId: item.articleId,
             quantity: item.quantity,
             required: item.required,
-            groupName: item.groupName || null,
+            groupName: null,
           })),
         },
       },
