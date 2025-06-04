@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
 import { toast } from "sonner";
-import { X } from "lucide-react";
+import { X, Trash2 } from "lucide-react";
 
 // UI Components
 import { Badge } from "@/components/ui/badge";
@@ -18,14 +18,26 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { MultiSelector, MultiSelectorContent, MultiSelectorInput, MultiSelectorItem, MultiSelectorList, MultiSelectorTrigger } from "@/components/nowts/multi-select";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // Custom components
-import { ImageUploader } from "../../components/ImageUploader";
+import { ImageUploader, ImageUploaderRef } from "../../components/ImageUploader";
 
 // Utilities
 import { cn } from "@/lib/utils";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
-import { updateArticleAction } from "../article.action";
+import { updateArticleAction, deleteArticleAction } from "../article.action";
 
 // Types needed for the form
 type Category = {
@@ -103,6 +115,7 @@ type ArticleDetailFormProps = {
 
 export function ArticleDetailForm({ article, allergens, categories, orgSlug, orgId }: ArticleDetailFormProps) {
   const router = useRouter();
+  const imageUploaderRef = useRef<ImageUploaderRef>(null);
 
   // Map pour accéder aux allergènes par leur ID
   const allergenMap = new Map<string, Allergen>();
@@ -153,13 +166,25 @@ export function ArticleDetailForm({ article, allergens, categories, orgSlug, org
 
   const mutation = useMutation({
     mutationFn: async (values: ArticleUpdateFormType) => {
+      // Si une image est en attente d'upload, l'uploader maintenant
+      if (imageUploaderRef.current) {
+        const wasUploaded = await imageUploaderRef.current.uploadPendingFile();
+        if (wasUploaded) {
+          // Attendre un peu pour que l'URL soit mise à jour
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+
+      // Récupérer les valeurs actualisées du formulaire
+      const currentValues = form.getValues();
+
       // Convertir les noms d'allergènes en IDs
       const allergenIds = selectedAllergenNames
         .map(name => allergenNameToIdMap.get(name))
         .filter(Boolean) as string[];
 
       return resolveActionResult(updateArticleAction({
-        ...values,
+        ...currentValues,
         allergenIds,
         orgId,
       }));
@@ -170,6 +195,22 @@ export function ArticleDetailForm({ article, allergens, categories, orgSlug, org
     },
     onError: (error) => {
       toast.error(error.message || "Erreur lors de la mise à jour de l'article");
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      return resolveActionResult(deleteArticleAction({
+        id: article.id,
+        orgSlug: orgSlug,
+      }));
+    },
+    onSuccess: () => {
+      toast.success("Article supprimé avec succès");
+      // La redirection est gérée par l'action
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erreur lors de la suppression de l'article");
     }
   });
 
@@ -325,6 +366,7 @@ export function ArticleDetailForm({ article, allergens, categories, orgSlug, org
               <FormItem>
                 <FormControl>
                   <ImageUploader
+                    ref={imageUploaderRef}
                     imageUrl={field.value}
                     onImageUploaded={(url) => field.onChange(url)}
                     onImageRemoved={() => field.onChange(null)}
@@ -497,7 +539,38 @@ export function ArticleDetailForm({ article, allergens, categories, orgSlug, org
 
       <Separator className="my-6" />
 
-      <div className="flex justify-end space-x-4">
+      <div className="flex justify-between items-center">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={deleteMutation.isPending}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Supprimer l'article
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+              <AlertDialogDescription>
+                Êtes-vous sûr de vouloir supprimer l'article "{article.name}" ?
+                Cette action ne peut pas être annulée.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deleteMutation.mutate()}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Supprimer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <LoadingButton
           type="submit"
           loading={mutation.isPending}

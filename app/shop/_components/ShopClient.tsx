@@ -1,8 +1,11 @@
 "use client";
 
+import Link from "next/link";
+import { User } from "lucide-react";
 import { ArticleGrid } from "./ArticleGrid";
 import { CartSidebar } from "./CartSidebar";
 import { CategoryTabs } from "./CategoryTabs";
+import { SidebarMenu } from "./SidebarMenu";
 import { ShopHeader } from "./ShopHeader";
 
 interface Category {
@@ -51,21 +54,47 @@ interface ShopClientProps {
 
 export function ShopClient({ bakery, categories, articles }: ShopClientProps) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
+      {/* Header simplifié avec juste l'image */}
       <ShopHeader bakery={bakery} />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          <div className="flex-1">
-            <CategoryTabs categories={categories} />
+
+      {/* Bouton de connexion flottant - Mobile only */}
+      <div className="lg:hidden fixed top-4 right-4 z-50">
+        <Link
+          href="/auth"
+          className="bg-gray-900 text-white p-3 rounded-full shadow-lg hover:bg-gray-800 transition-colors flex items-center justify-center"
+        >
+          <User className="w-5 h-5" />
+        </Link>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <div className="flex gap-6 lg:gap-8">
+          {/* Sidebar Menu - Desktop only */}
+          <SidebarMenu categories={categories} bakery={bakery} />
+
+          {/* Main content */}
+          <div className="flex-1 min-w-0">
+            {/* Category Tabs - Mobile only */}
+            <div className="lg:hidden">
+              <CategoryTabs categories={categories} />
+            </div>
+
+            {/* Articles Grid */}
             <ArticleGrid
               articles={articles}
               categories={categories}
               bakery={bakery}
             />
           </div>
+
+          {/* Cart sidebar - Desktop only */}
           <CartSidebar />
         </div>
       </div>
+
+      {/* Mobile spacing for floating cart button */}
+      <div className="h-20 lg:hidden" />
     </div>
   );
 } 

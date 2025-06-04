@@ -1,13 +1,25 @@
 "use server";
 
-
 import { prisma } from "@/lib/prisma";
-;
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { action } from "@/lib/actions/safe-actions";
+import { redirect } from "next/navigation";
 
-const updateArticleSchema = z.object({
+// Fonction pour sérialiser les objets avec Decimal
+function serializeData(data: any) {
+  return JSON.parse(
+    JSON.stringify(data, (key, value) =>
+      typeof value === "object" &&
+      value !== null &&
+      typeof value.toJSON === "function"
+        ? value.toJSON()
+        : value,
+    ),
+  );
+}
+
+const UpdateArticleSchema = z.object({
   id: z.string().min(1, "L'ID du produit est requis"),
   name: z.string().min(1, "Le nom du produit est requis"),
   description: z.string().optional(),
@@ -33,8 +45,16 @@ const updateArticleSchema = z.object({
   orgId: z.string().optional(),
 });
 
+const DeleteArticleSchema = z.object({
+  id: z.string().min(1, "L'ID du produit est requis"),
+  orgSlug: z.string().min(1, "Le slug de l'organisation est requis"),
+});
+
+export type UpdateArticleSchemaType = z.infer<typeof UpdateArticleSchema>;
+export type DeleteArticleSchemaType = z.infer<typeof DeleteArticleSchema>;
+
 export const updateArticleAction = action
-  .schema(updateArticleSchema)
+  .schema(UpdateArticleSchema)
   .action(async ({ parsedInput, ctx }) => {
     const { id, allergenIds, orgId, ...articleData } = parsedInput;
 
@@ -83,5 +103,38 @@ export const updateArticleAction = action
     // Revalider le chemin pour que les changements apparaissent immédiatement
     revalidatePath(`/orgs/${orgId}/articles`);
 
-    return updatedArticle;
+    // Sérialiser les données avant de les retourner
+    return serializeData(updatedArticle);
+  });
+
+export const deleteArticleAction = action
+  .schema(DeleteArticleSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { id, orgSlug } = parsedInput;
+
+    // Vérifier que l'article existe
+    const article = await prisma.article.findUnique({
+      where: { id },
+      select: { id: true, name: true },
+    });
+
+    if (!article) {
+      throw new Error("Article non trouvé");
+    }
+
+    // Supprimer d'abord les associations d'allergènes
+    await prisma.productAllergen.deleteMany({
+      where: { articleId: id },
+    });
+
+    // Supprimer l'article
+    await prisma.article.delete({
+      where: { id },
+    });
+
+    // Revalider les chemins
+    revalidatePath(`/orgs/${orgSlug}/articles`);
+
+    // Rediriger vers la liste des articles
+    redirect(`/orgs/${orgSlug}/articles`);
   });

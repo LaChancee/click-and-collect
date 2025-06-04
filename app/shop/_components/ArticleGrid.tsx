@@ -97,7 +97,7 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
   }, {} as Record<string, Article[]>);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {categories.map((category) => {
         const categoryArticles = articlesByCategory[category.id];
 
@@ -108,15 +108,15 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
         return (
           <div key={category.id} id={`category-${category.slug}`}>
             {/* Category Header */}
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <div className="mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
                 {category.name}
               </h2>
-              <div className="w-12 h-1 bg-black rounded-full"></div>
+              <div className="w-8 sm:w-12 h-1 bg-black rounded-full"></div>
             </div>
 
-            {/* Articles Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Articles Grid - Responsive */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {categoryArticles.map((article) => {
                 const quantity = getItemQuantity(article.id);
                 const price = parseFloat(article.price);
@@ -136,7 +136,7 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
                           className="object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-4xl">
+                        <div className="w-full h-full flex items-center justify-center text-3xl sm:text-4xl">
                           🥖
                         </div>
                       )}
@@ -149,13 +149,13 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
                     </div>
 
                     {/* Article Info */}
-                    <div className="p-4">
+                    <div className="p-3 sm:p-4">
                       <div className="mb-3">
-                        <h3 className="font-semibold text-gray-900 mb-1">
+                        <h3 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base">
                           {article.name}
                         </h3>
                         {article.description && (
-                          <p className="text-sm text-gray-600 line-clamp-2">
+                          <p className="text-xs sm:text-sm text-gray-600 line-clamp-2">
                             {article.description}
                           </p>
                         )}
@@ -163,7 +163,7 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
 
                       {/* Price and Add to Cart */}
                       <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-gray-900">
+                        <span className="text-base sm:text-lg font-bold text-gray-900">
                           {price.toFixed(2)}€
                         </span>
 
@@ -173,28 +173,28 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
                               <Button
                                 size="sm"
                                 onClick={() => handleAddToCart(article)}
-                                className="bg-black hover:bg-gray-800 text-white"
+                                className="bg-black hover:bg-gray-800 text-white text-xs sm:text-sm touch-manipulation mobile-tap active:scale-95"
                               >
-                                <Plus className="h-4 w-4 mr-1" />
-                                Ajouter
+                                <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                                <span className="hidden xs:inline">Ajouter</span>
                               </Button>
                             ) : (
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1 sm:gap-2">
                                 <Button
                                   size="sm"
                                   variant="outline"
                                   onClick={() => handleUpdateQuantity(article.id, -1)}
-                                  className="h-8 w-8 p-0 rounded-full"
+                                  className="h-7 w-7 sm:h-8 sm:w-8 p-0 rounded-full touch-manipulation mobile-tap active:scale-95"
                                 >
                                   <Minus className="h-3 w-3" />
                                 </Button>
-                                <span className="font-medium text-sm min-w-[20px] text-center">
+                                <span className="font-medium text-xs sm:text-sm min-w-[16px] sm:min-w-[20px] text-center">
                                   {quantity}
                                 </span>
                                 <Button
                                   size="sm"
                                   onClick={() => handleUpdateQuantity(article.id, 1)}
-                                  className="h-8 w-8 p-0 rounded-full bg-black hover:bg-gray-800"
+                                  className="h-7 w-7 sm:h-8 sm:w-8 p-0 rounded-full bg-black hover:bg-gray-800 touch-manipulation mobile-tap active:scale-95"
                                 >
                                   <Plus className="h-3 w-3" />
                                 </Button>
@@ -202,14 +202,14 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
                             )}
                           </div>
                         ) : (
-                          <Badge variant="secondary">Épuisé</Badge>
+                          <Badge variant="secondary" className="text-xs">Épuisé</Badge>
                         )}
                       </div>
 
                       {/* Stock info */}
                       {article.stockCount != null && article.stockCount <= 5 && article.stockCount > 0 && (
                         <div className="mt-2">
-                          <Badge variant="outline" className="text-orange-600 border-orange-200">
+                          <Badge variant="outline" className="text-orange-600 border-orange-200 text-xs">
                             Plus que {article.stockCount} restant{article.stockCount > 1 ? 's' : ''}
                           </Badge>
                         </div>
@@ -225,12 +225,12 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
 
       {/* Empty state */}
       {articles.length === 0 && (
-        <div className="text-center py-12">
-          <ShoppingCart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+        <div className="text-center py-8 sm:py-12">
+          <ShoppingCart className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-gray-400 mb-4" />
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
             Aucun article disponible
           </h3>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             Cette boulangerie n'a pas encore ajouté d'articles à son catalogue.
           </p>
         </div>

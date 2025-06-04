@@ -1,10 +1,6 @@
-"use client";
+  "use client";
 
-import { Clock, MapPin, Phone, Star, User } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { AuthButtonClient } from "@/features/auth/auth-button-client";
+import Image from "next/image";
 
 interface BakeryInfo {
   id: string;
@@ -23,88 +19,35 @@ interface ShopHeaderProps {
 }
 
 export function ShopHeader({ bakery }: ShopHeaderProps) {
-  // Calculer si la boulangerie est ouverte (logique simplifiée)
-  const isOpen = true; // À améliorer avec la vraie logique des horaires
-  const rating = 4.8; // Valeur par défaut, à connecter avec un système de notes
-  const deliveryTime = "15-30 min"; // À connecter avec les créneaux
-
   return (
-    <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="py-6">
-          {/* Main bakery info */}
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {bakery.name}
-                </h1>
-                {isOpen && (
-                  <Badge className="bg-green-100 text-green-800 border-green-200">
-                    Ouvert
-                  </Badge>
-                )}
-              </div>
+    <div className="bg-white p-4 sm:p-6 lg:p-8">
+      {/* Hero Banner avec padding */}
+      <div className="relative h-40 sm:h-48 lg:h-56 overflow-hidden rounded-2xl shadow-lg">
+        {/* Background Image - Photo réaliste de boulangerie */}
+        <div className="absolute inset-0">
+          <Image
+            src="https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2072&q=80"
+            alt="Devanture de boulangerie"
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
 
-              {bakery.description && (
-                <p className="text-gray-600 mb-3">
-                  {bakery.description}
-                </p>
-              )}
+        {/* Overlay subtil */}
+        <div className="absolute inset-0 bg-black/40" />
 
-              {/* Info badges */}
-              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                {rating && (
-                  <div className="flex items-center gap-1">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium">{rating}</span>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  <span>{deliveryTime}</span>
+        {/* Logo Badge - Centré et stylisé */}
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+          <div className="bg-orange-500 text-white px-6 py-4 rounded-2xl shadow-2xl transform rotate-2 border-4 border-orange-400">
+            <div className="text-center font-bold">
+              {bakery.name.split(' ').map((word, index) => (
+                <div key={index} className="text-base sm:text-lg lg:text-xl leading-tight">
+                  {word.toUpperCase()}
                 </div>
-
-                {bakery.address && (
-                  <div className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4" />
-                    <span className="max-w-xs truncate">{bakery.address}</span>
-                  </div>
-                )}
-
-                {bakery.phone && (
-                  <div className="flex items-center gap-1">
-                    <Phone className="h-4 w-4" />
-                    <span>{bakery.phone}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex items-center gap-2 ml-4">
-              <AuthButtonClient />
-              <Button variant="outline" size="sm">
-                Infos
-              </Button>
-              <Button variant="outline" size="sm">
-                Horaires
-              </Button>
+              ))}
             </div>
           </div>
-
-          {/* Opening hours if available */}
-          {bakery.openingHours && (
-            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4 text-gray-500" />
-                <span className="text-gray-700">
-                  Horaires : {bakery.openingHours}
-                </span>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

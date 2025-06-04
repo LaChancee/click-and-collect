@@ -18,6 +18,21 @@ export const metadata: Metadata = {
   title: SiteConfig.title,
   description: SiteConfig.description,
   metadataBase: new URL(getServerUrl()),
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
+  themeColor: '#ffffff',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: SiteConfig.title,
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 const CaptionFont = Space_Grotesk({

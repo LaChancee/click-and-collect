@@ -214,6 +214,24 @@
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
   }
+
+  /* Mobile optimization utilities */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  .safe-area-inset {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Smooth transitions for mobile interactions */
+  .mobile-tap {
+    transition: transform 0.1s ease;
+  }
+
+  .mobile-tap:active {
+    transform: scale(0.98);
+  }
 }
 
 /* Other styles */
