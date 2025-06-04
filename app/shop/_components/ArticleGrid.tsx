@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { Plus, Minus, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { useCart } from "../../../src/stores/cart-context";
+import { useEffect, useCallback } from "react";
 
 interface Category {
   id: string;
@@ -33,27 +33,62 @@ interface Article {
   };
 }
 
+interface Bakery {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  openingHours?: string | null;
+  email?: string | null;
+  logo?: string | null;
+}
+
 interface ArticleGridProps {
   articles: Article[];
   categories: Category[];
+  bakery: Bakery;
 }
 
-export function ArticleGrid({ articles, categories }: ArticleGridProps) {
-  const [cart, setCart] = useState<Record<string, number>>({});
+export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) {
+  const { addItem, updateQuantity, getItemQuantity, setBakery } = useCart();
 
-  const updateCart = (articleId: string, change: number) => {
-    setCart(prev => {
-      const currentQuantity = prev[articleId] || 0;
-      const newQuantity = Math.max(0, currentQuantity + change);
+  // Définir la boulangerie actuelle au chargement
+  useEffect(() => {
+    if (bakery?.id && bakery?.name) {
+      setBakery(bakery.id, bakery.name);
+    }
+  }, [bakery?.id, bakery?.name, setBakery]);
 
-      if (newQuantity === 0) {
-        const { [articleId]: removed, ...rest } = prev;
-        return rest;
-      }
+  const handleAddToCart = useCallback((article: Article) => {
+    if (!bakery?.id || !bakery?.name) {
+      console.error("Bakery data is missing");
+      return;
+    }
 
-      return { ...prev, [articleId]: newQuantity };
+    const price = parseFloat(article.price);
+
+    addItem({
+      id: article.id,
+      name: article.name,
+      price,
+      imageUrl: article.imageUrl || article.image,
+      bakeryId: bakery.id,
+      bakeryName: bakery.name,
     });
-  };
+  }, [addItem, bakery?.id, bakery?.name]);
+
+  const handleUpdateQuantity = useCallback((articleId: string, change: number) => {
+    const currentQuantity = getItemQuantity(articleId);
+    const newQuantity = currentQuantity + change;
+
+    if (newQuantity <= 0) {
+      updateQuantity(articleId, 0);
+    } else {
+      updateQuantity(articleId, newQuantity);
+    }
+  }, [getItemQuantity, updateQuantity]);
 
   // Grouper les articles par catégorie
   const articlesByCategory = categories.reduce((acc, category) => {
@@ -83,7 +118,7 @@ export function ArticleGrid({ articles, categories }: ArticleGridProps) {
             {/* Articles Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {categoryArticles.map((article) => {
-                const quantity = cart[article.id] || 0;
+                const quantity = getItemQuantity(article.id);
                 const price = parseFloat(article.price);
 
                 return (
@@ -137,7 +172,7 @@ export function ArticleGrid({ articles, categories }: ArticleGridProps) {
                             {quantity === 0 ? (
                               <Button
                                 size="sm"
-                                onClick={() => updateCart(article.id, 1)}
+                                onClick={() => handleAddToCart(article)}
                                 className="bg-black hover:bg-gray-800 text-white"
                               >
                                 <Plus className="h-4 w-4 mr-1" />
@@ -148,7 +183,7 @@ export function ArticleGrid({ articles, categories }: ArticleGridProps) {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => updateCart(article.id, -1)}
+                                  onClick={() => handleUpdateQuantity(article.id, -1)}
                                   className="h-8 w-8 p-0 rounded-full"
                                 >
                                   <Minus className="h-3 w-3" />
@@ -158,7 +193,7 @@ export function ArticleGrid({ articles, categories }: ArticleGridProps) {
                                 </span>
                                 <Button
                                   size="sm"
-                                  onClick={() => updateCart(article.id, 1)}
+                                  onClick={() => handleUpdateQuantity(article.id, 1)}
                                   className="h-8 w-8 p-0 rounded-full bg-black hover:bg-gray-800"
                                 >
                                   <Plus className="h-3 w-3" />
@@ -172,7 +207,7 @@ export function ArticleGrid({ articles, categories }: ArticleGridProps) {
                       </div>
 
                       {/* Stock info */}
-                      {article.stockCount !== null && article.stockCount <= 5 && article.stockCount > 0 && (
+                      {article.stockCount != null && article.stockCount <= 5 && article.stockCount > 0 && (
                         <div className="mt-2">
                           <Badge variant="outline" className="text-orange-600 border-orange-200">
                             Plus que {article.stockCount} restant{article.stockCount > 1 ? 's' : ''}

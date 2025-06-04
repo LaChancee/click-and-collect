@@ -25,6 +25,9 @@ import {
   Settings,
   SunMedium,
   SunMoon,
+  ShoppingBag,
+  User,
+  ChefHat,
 } from "lucide-react";
 
 import { useTheme } from "next-themes";
@@ -47,6 +50,10 @@ export const UserDropdown = ({ children }: PropsWithChildren) => {
     return null;
   }
 
+  // Vérifier si l'utilisateur a des organisations boulangerie
+  // Note: Cette logique devra être améliorée quand on aura accès aux données d'organisation côté client
+  const hasBakeryOrg = session.data?.user?.id; // Placeholder - à remplacer par la vraie logique
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
@@ -64,38 +71,63 @@ export const UserDropdown = ({ children }: PropsWithChildren) => {
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+
+        {/* Liens contextuels selon le type d'utilisateur */}
         <DropdownMenuItem asChild>
-          <Link href="/orgs">
-            <LayoutDashboard className="mr-2 size-4" />
-            Dashboard
+          <Link href="/account/profile">
+            <User className="mr-2 size-4" />
+            Mon profil
           </Link>
         </DropdownMenuItem>
+
+        <DropdownMenuItem asChild>
+          <Link href="/account/orders">
+            <ShoppingBag className="mr-2 size-4" />
+            Mes commandes
+          </Link>
+        </DropdownMenuItem>
+
+        {/* Si l'utilisateur a une boulangerie, afficher le lien dashboard */}
+        {hasBakeryOrg && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/orgs">
+                <ChefHat className="mr-2 size-4" />
+                Espace boulangerie
+              </Link>
+            </DropdownMenuItem>
+          </>
+        )}
+
+        <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/account">
             <Settings className="mr-2 size-4" />
-            Account Settings
+            Paramètres
           </Link>
         </DropdownMenuItem>
+
         <DropdownMenuSeparator />
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
             <SunMoon className="mr-2 size-4" />
-            <span>Theme</span>
+            <span>Thème</span>
           </DropdownMenuSubTrigger>
           <DropdownMenuPortal>
             <DropdownMenuSubContent>
               <DropdownMenuItem onClick={() => theme.setTheme("dark")}>
                 <SunMedium className="mr-2 size-4" />
-                <span>Dark</span>
+                <span>Sombre</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => theme.setTheme("light")}>
                 <Moon className="mr-2 size-4" />
-                <span>Light</span>
+                <span>Clair</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => theme.setTheme("system")}>
                 <Monitor className="mr-2 size-4" />
-                <span>System</span>
+                <span>Système</span>
               </DropdownMenuItem>
             </DropdownMenuSubContent>
           </DropdownMenuPortal>
@@ -116,7 +148,7 @@ export const UserDropdown = ({ children }: PropsWithChildren) => {
             ) : (
               <LogOut className="mr-2 size-4" />
             )}
-            <span>Logout</span>
+            <span>Se déconnecter</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

@@ -1,8 +1,10 @@
 "use client";
 
-import { Clock, MapPin, Phone, Star } from "lucide-react";
+import { Clock, MapPin, Phone, Star, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { AuthButtonClient } from "@/features/auth/auth-button-client";
 
 interface BakeryInfo {
   id: string;
@@ -82,6 +84,7 @@ export function ShopHeader({ bakery }: ShopHeaderProps) {
 
             {/* Action buttons */}
             <div className="flex items-center gap-2 ml-4">
+              <AuthButtonClient />
               <Button variant="outline" size="sm">
                 Infos
               </Button>

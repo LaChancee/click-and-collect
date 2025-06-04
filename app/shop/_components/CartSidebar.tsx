@@ -1,62 +1,40 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { ShoppingCart, X, Plus, Minus, Clock, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import Image from "next/image";
-
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  imageUrl?: string;
-}
-
-// Mock data - à connecter avec le state global du panier
-const mockCartItems: CartItem[] = [
-  {
-    id: "1",
-    name: "Croissant au beurre",
-    price: 1.20,
-    quantity: 2,
-    imageUrl: "https://images.unsplash.com/photo-1549312195-99d891b2ecbb?w=100",
-  },
-  {
-    id: "3",
-    name: "Éclair au chocolat",
-    price: 2.80,
-    quantity: 1,
-    imageUrl: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=100",
-  },
-];
+import { useCart, type CartItem } from "../../../src/stores/cart-context";
 
 const deliveryFee: number = 0; // Gratuit pour le click & collect
 const minimumOrder = 10;
 
 export function CartSidebar() {
-  const [cartItems, setCartItems] = useState<CartItem[]>(mockCartItems);
   const [isOpen, setIsOpen] = useState(false);
+  const {
+    state,
+    updateQuantity,
+    removeItem,
+    getTotalItems,
+    getTotalPrice
+  } = useCart();
 
-  const subtotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const cartItems = state.items;
+  const bakeryName = state.bakeryName;
+  const subtotal = getTotalPrice();
   const total = subtotal + deliveryFee;
-  const itemCount = cartItems.reduce((count, item) => count + item.quantity, 0);
+  const itemCount = getTotalItems();
   const canCheckout = total >= minimumOrder;
 
-  const updateQuantity = (id: string, newQuantity: number) => {
+  const handleUpdateQuantity = useCallback((id: string, newQuantity: number) => {
     if (newQuantity <= 0) {
-      setCartItems(items => items.filter(item => item.id !== id));
+      removeItem(id);
     } else {
-      setCartItems(items =>
-        items.map(item =>
-          item.id === id ? { ...item, quantity: newQuantity } : item
-        )
-      );
+      updateQuantity(id, newQuantity);
     }
-  };
+  }, [removeItem, updateQuantity]);
 
   const CartContent = () => (
     <div className="flex flex-col h-full">
@@ -67,17 +45,19 @@ export function CartSidebar() {
           <Badge variant="secondary">{itemCount} article{itemCount > 1 ? 's' : ''}</Badge>
         </div>
 
-        {/* Delivery Info */}
-        <div className="mt-3 space-y-2">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <MapPin className="h-4 w-4" />
-            <span>Retrait en magasin</span>
+        {/* Bakery Info */}
+        {bakeryName && (
+          <div className="mt-3 space-y-2">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <MapPin className="h-4 w-4" />
+              <span>Retrait chez {bakeryName}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Clock className="h-4 w-4" />
+              <span>Prêt dans 15-30 min</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Clock className="h-4 w-4" />
-            <span>Prêt dans 15-30 min</span>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Cart Items */}
@@ -89,7 +69,7 @@ export function CartSidebar() {
             <p className="text-sm text-gray-400">Ajoutez des articles pour commencer</p>
           </div>
         ) : (
-          cartItems.map((item) => (
+          cartItems.map((item: CartItem) => (
             <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               {/* Image */}
               <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
@@ -121,7 +101,7 @@ export function CartSidebar() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                  onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
                   className="h-8 w-8 p-0 rounded-full"
                 >
                   <Minus className="h-3 w-3" />
@@ -131,7 +111,7 @@ export function CartSidebar() {
                 </span>
                 <Button
                   size="sm"
-                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                  onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
                   className="h-8 w-8 p-0 rounded-full bg-black hover:bg-gray-800"
                 >
                   <Plus className="h-3 w-3" />
@@ -177,6 +157,10 @@ export function CartSidebar() {
           <Button
             className="w-full bg-black hover:bg-gray-800 text-white"
             disabled={!canCheckout}
+            onClick={() => {
+              // TODO: Rediriger vers la page de checkout
+              console.log("Redirection vers checkout");
+            }}
           >
             {canCheckout ? (
               `Commander • ${total.toFixed(2)}€`

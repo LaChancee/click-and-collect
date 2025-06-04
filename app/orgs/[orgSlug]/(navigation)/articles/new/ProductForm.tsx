@@ -15,7 +15,6 @@ import { LoadingButton } from "@/features/form/submit-button";
 import { useEffect, useState, useRef } from "react";
 import { createArticle } from "./product.action";
 import { getCategoriesAction, seedBakeryCategories } from "../categories/new/category.action";
-import { prisma } from "@/lib/prisma";
 import { ImageUploader } from "../components/ImageUploader";
 import { Button } from "@/components/ui/button";
 
@@ -63,13 +62,13 @@ export function ProductForm({ orgSlug, orgId }: { orgSlug: string, orgId: string
       // Si une image est en attente d'upload, l'uploader maintenant
       if (window.uploadPendingImage) {
         setIsSubmitting(true);
-     
-          const wasUploaded = await window.uploadPendingImage();
-          // Attendre juste assez pour que l'URL soit mise à jour
-          if (wasUploaded) {
-            await new Promise(resolve => setTimeout(resolve, 800));
-          }
-      
+
+        const wasUploaded = await window.uploadPendingImage();
+        // Attendre juste assez pour que l'URL soit mise à jour
+        if (wasUploaded) {
+          await new Promise(resolve => setTimeout(resolve, 800));
+        }
+
       }
 
       // Récupérer les valeurs actualisées du formulaire
