@@ -102,7 +102,7 @@ export default async function HomePage(props: PageParams) {
             </Link>
           </div>
         </div>
-      </div>
-    );
+    </div>
+  );
   }
 }
