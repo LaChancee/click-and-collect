@@ -6,6 +6,7 @@ import type { AuthRole } from "@/lib/auth/auth-permissions";
 import { isInRoles } from "@/lib/organizations/is-in-roles";
 import {
   AlertCircle,
+  Clock,
   CreditCard,
   Home,
   Package,
@@ -72,6 +73,12 @@ export const ORGANIZATION_LINKS: NavigationGroup[] = [
         href: `${ORGANIZATION_PATH}/orders`,
         Icon: Package,
         label: "Commandes",
+      },
+      {
+        href: `${ORGANIZATION_PATH}/time-slots`,
+        Icon: Clock,
+        label: "Créneaux horaires",
+        roles: ["owner", "admin"],
       },
       {
         href: `${ORGANIZATION_PATH}/promotions`,

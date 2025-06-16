@@ -12,8 +12,15 @@ export default async function ProfilePage() {
   // Récupérer les statistiques du client
   const stats = await prisma.order.aggregate({
     where: {
-      customerEmail: user.email,
-      status: "completed",
+      OR: [
+        { guestEmail: user.email },
+        {
+          customer: {
+            email: user.email
+          }
+        }
+      ],
+      status: "COMPLETED",
     },
     _count: {
       id: true,
@@ -23,36 +30,51 @@ export default async function ProfilePage() {
     },
   });
 
-  // Récupérer les boulangeries favorites (basé sur les commandes)
-  const favoriteBakeries = await prisma.order.groupBy({
-    by: ["bakeryId"],
+  // Récupérer les commandes pour identifier les boulangeries favorites
+  const orders = await prisma.order.findMany({
     where: {
-      customerEmail: user.email,
+      OR: [
+        { guestEmail: user.email },
+        {
+          customer: {
+            email: user.email
+          }
+        }
+      ],
     },
-    _count: {
-      id: true,
+    include: {
+      timeSlot: {
+        include: {
+          bakery: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              address: true,
+            }
+          }
+        }
+      }
     },
-    orderBy: {
-      _count: {
-        id: "desc",
-      },
-    },
-    take: 3,
   });
 
-  const bakeries = await prisma.organization.findMany({
-    where: {
-      id: {
-        in: favoriteBakeries.map(fb => fb.bakeryId),
-      },
-    },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      address: true,
-    },
-  });
+  // Grouper par boulangerie et compter les commandes
+  const bakeryStats = orders.reduce((acc, order) => {
+    const bakeryId = order.timeSlot.bakery.id;
+    if (!acc[bakeryId]) {
+      acc[bakeryId] = {
+        bakery: order.timeSlot.bakery,
+        count: 0,
+      };
+    }
+    acc[bakeryId].count++;
+    return acc;
+  }, {} as Record<string, { bakery: any; count: number }>);
+
+  // Trier par nombre de commandes et prendre les 3 premiers
+  const favoriteBakeries = Object.values(bakeryStats)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3);
 
   return (
     <div className="space-y-6">
@@ -147,7 +169,7 @@ export default async function ProfilePage() {
                 <User className="h-6 w-6 text-orange-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{bakeries.length}</div>
+                <div className="text-2xl font-bold">{favoriteBakeries.length}</div>
                 <div className="text-sm text-gray-600">Boulangeries visitées</div>
               </div>
             </div>
@@ -156,7 +178,7 @@ export default async function ProfilePage() {
       </div>
 
       {/* Boulangeries favorites */}
-      {bakeries.length > 0 && (
+      {favoriteBakeries.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Mes boulangeries préférées</CardTitle>
@@ -166,25 +188,22 @@ export default async function ProfilePage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {bakeries.map((bakery) => {
-                const orderCount = favoriteBakeries.find(fb => fb.bakeryId === bakery.id)?._count.id || 0;
-                return (
-                  <div key={bakery.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <h3 className="font-semibold">{bakery.name}</h3>
-                    <p className="text-sm text-gray-600 mt-1">{bakery.address}</p>
-                    <div className="flex items-center justify-between mt-3">
-                      <Badge variant="secondary">
-                        {orderCount} commande{orderCount > 1 ? 's' : ''}
-                      </Badge>
-                      <Link href={`/?bakery=${bakery.slug}`}>
-                        <Button variant="outline" size="sm">
-                          Voir
-                        </Button>
-                      </Link>
-                    </div>
+              {favoriteBakeries.map(({ bakery, count }) => (
+                <div key={bakery.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <h3 className="font-semibold">{bakery.name}</h3>
+                  <p className="text-sm text-gray-600 mt-1">{bakery.address}</p>
+                  <div className="flex items-center justify-between mt-3">
+                    <Badge variant="secondary">
+                      {count} commande{count > 1 ? 's' : ''}
+                    </Badge>
+                    <Link href={`/shop?bakery=${bakery.slug}`}>
+                      <Button variant="outline" size="sm">
+                        Voir
+                      </Button>
+                    </Link>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -200,18 +219,14 @@ export default async function ProfilePage() {
             <Link href="/account/orders">
               <Button variant="outline">
                 <ShoppingBag className="h-4 w-4 mr-2" />
-                Voir mes commandes
+                Mes commandes
               </Button>
             </Link>
-            <Link href="/">
-              <Button variant="outline">
-                Explorer les boulangeries
+            <Link href="/shop">
+              <Button>
+                Nouvelle commande
               </Button>
             </Link>
-            <Button variant="outline">
-              <Mail className="h-4 w-4 mr-2" />
-              Préférences email
-            </Button>
           </div>
         </CardContent>
       </Card>

@@ -12,21 +12,23 @@ export default async function OrdersPage() {
   // Récupérer les commandes du client
   const orders = await prisma.order.findMany({
     where: {
-      customerEmail: user.email,
+      OR: [
+        { guestEmail: user.email },
+        { customer: { email: user.email } }
+      ]
     },
     include: {
-      bakery: {
+      customer: {
         select: {
           name: true,
           slug: true,
-          address: true,
+          email: true,
         },
       },
       timeSlot: {
         select: {
           startTime: true,
           endTime: true,
-          date: true,
         },
       },
     },
@@ -37,15 +39,15 @@ export default async function OrdersPage() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      pending: { label: "En attente", variant: "secondary" as const },
-      confirmed: { label: "Confirmée", variant: "default" as const },
-      preparing: { label: "En préparation", variant: "default" as const },
-      ready: { label: "Prête", variant: "default" as const },
-      completed: { label: "Récupérée", variant: "default" as const },
-      cancelled: { label: "Annulée", variant: "destructive" as const },
+      PENDING: { label: "En attente", variant: "secondary" as const },
+      CONFIRMED: { label: "Confirmée", variant: "default" as const },
+      PREPARING: { label: "En préparation", variant: "default" as const },
+      READY: { label: "Prête", variant: "default" as const },
+      COMPLETED: { label: "Récupérée", variant: "default" as const },
+      CANCELLED: { label: "Annulée", variant: "destructive" as const },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.PENDING;
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
@@ -80,10 +82,12 @@ export default async function OrdersPage() {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-lg">{order.bakery.name}</CardTitle>
+                    <CardTitle className="text-lg">
+                      {order.customer?.name || "Commande invité"}
+                    </CardTitle>
                     <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                      <MapPin className="h-4 w-4" />
-                      {order.bakery.address}
+                      <Receipt className="h-4 w-4" />
+                      Commande #{order.orderNumber}
                     </div>
                   </div>
                   {getStatusBadge(order.status)}
@@ -132,7 +136,7 @@ export default async function OrdersPage() {
                   <div className="space-y-2">
                     <div className="text-sm text-gray-600">Total</div>
                     <div className="text-lg font-semibold">
-                      {order.totalAmount.toFixed(2)}€
+                      {Number(order.totalAmount).toFixed(2)}€
                     </div>
                   </div>
                 </div>
@@ -154,12 +158,12 @@ export default async function OrdersPage() {
                       Voir le détail
                     </Link>
                   </Button>
-                  {order.status === "pending" && (
+                  {order.status === "PENDING" && (
                     <Button variant="outline" size="sm">
                       Modifier
                     </Button>
                   )}
-                  {(order.status === "confirmed" || order.status === "preparing") && (
+                  {(order.status === "CONFIRMED" || order.status === "PREPARING") && (
                     <Button variant="outline" size="sm">
                       Annuler
                     </Button>
