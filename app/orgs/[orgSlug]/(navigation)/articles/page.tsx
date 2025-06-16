@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { DataTable } from "./_components/DataTable";
 import { Heading, EmptyState } from "./_components/UIComponents";
+import { SeedCategoriesButton } from "./_components/SeedCategoriesButton";
 import { prisma } from "@/lib/prisma";
 import { ProductTableItem } from "./_components/columns";
 
@@ -223,6 +224,11 @@ export default async function ArticlesPage({
           description="Gérez les produits proposés par votre boulangerie"
         />
         <div className="flex gap-2">
+          <SeedCategoriesButton
+            orgId={currentOrg.id}
+            orgSlug={orgSlug}
+            hasCategories={categories.length > 0}
+          />
           <Button asChild variant="outline">
             <a href={`/orgs/${orgSlug}/articles/categories/new`}>
               <Plus className="mr-2 h-4 w-4" />
@@ -261,14 +267,25 @@ export default async function ArticlesPage({
               {articles.length === 0 ? (
                 <EmptyState
                   title="Aucun produit"
-                  description="Vous n'avez pas encore créé de produits. Commencez par en ajouter un."
+                  description={categories.length === 0
+                    ? "Commencez par ajouter des catégories de base pour votre boulangerie, puis ajoutez vos premiers produits."
+                    : "Vous n'avez pas encore créé de produits. Commencez par en ajouter un."
+                  }
                   action={
-                    <Button asChild>
-                      <a href={`/orgs/${orgSlug}/articles/new`}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Ajouter un produit
-                      </a>
-                    </Button>
+                    categories.length === 0 ? (
+                      <SeedCategoriesButton
+                        orgId={currentOrg.id}
+                        orgSlug={orgSlug}
+                        hasCategories={false}
+                      />
+                    ) : (
+                      <Button asChild>
+                        <a href={`/orgs/${orgSlug}/articles/new`}>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Ajouter un produit
+                        </a>
+                      </Button>
+                    )
                   }
                 />
               ) : (

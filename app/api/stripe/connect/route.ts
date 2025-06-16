@@ -51,8 +51,26 @@ export async function POST(request: NextRequest) {
       onboardingUrl: accountLink.url,
       accountId: account.id,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erreur lors de la création du compte Stripe:", error);
+
+    // Gestion spécifique de l'erreur de profil de plateforme
+    if (
+      error.message &&
+      error.message.includes("responsibilities of managing losses")
+    ) {
+      return NextResponse.json(
+        {
+          error: "Configuration Stripe Connect incomplète",
+          details:
+            "Veuillez configurer votre profil de plateforme dans le Stripe Dashboard (Paramètres > Connect > Profil de plateforme) avant de créer des comptes connectés.",
+          dashboardUrl:
+            "https://dashboard.stripe.com/settings/connect/platform-profile",
+        },
+        { status: 400 },
+      );
+    }
+
     return NextResponse.json(
       { error: "Erreur lors de la création du compte Stripe" },
       { status: 500 },

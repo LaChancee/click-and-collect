@@ -22,6 +22,15 @@ export function StripeConnectButton() {
       const data = await response.json();
 
       if (!response.ok) {
+        // Gestion spécifique de l'erreur de profil de plateforme
+        if (data.error?.includes('Configuration Stripe Connect incomplète')) {
+          toast.error(data.details || 'Configuration Stripe Connect incomplète');
+          setTimeout(() => {
+            window.open(data.dashboardUrl || 'https://dashboard.stripe.com/settings/connect/platform-profile', '_blank');
+          }, 2000);
+          return;
+        }
+
         // Si l'erreur est liée à Connect non activé, rediriger vers le dashboard
         if (data.error?.includes('Connect') || response.status === 500) {
           toast.error('Stripe Connect n\'est pas encore activé. Redirection vers votre dashboard Stripe...');

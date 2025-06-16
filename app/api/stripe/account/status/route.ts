@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { StripeService } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
-import { getRequiredCurrentOrg } from "@/lib/organizations/get-org";
+import { getRequiredBakeryUser } from "@/lib/auth/auth-user";
 import { z } from "zod";
+import { stripe } from "@/lib/stripe";
 
 const StatusSchema = z.object({
   accountId: z.string(),
@@ -10,36 +10,25 @@ const StatusSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const organization = await getRequiredCurrentOrg();
-
-    if (!organization.isBakery) {
-      return NextResponse.json(
-        {
-          error: "Seules les boulangeries peuvent vérifier leur statut Stripe",
-        },
-        { status: 403 },
-      );
-    }
+    const { bakery } = await getRequiredBakeryUser();
 
     const body = await request.json();
     const { accountId } = StatusSchema.parse(body);
 
     // Vérifier que l'accountId correspond à l'organisation
-    if (organization.stripeAccountId !== accountId) {
+    if (bakery.stripeAccountId !== accountId) {
       return NextResponse.json(
         { error: "ID de compte non autorisé" },
         { status: 403 },
       );
     }
 
-    const stripeService = StripeService.getInstance();
-
     // Récupérer le statut depuis Stripe
-    const accountStatus = await stripeService.getAccountStatus(accountId);
+    const accountStatus = await stripe.accounts.retrieve(accountId);
 
     // Mettre à jour la base de données
     await prisma.organization.update({
-      where: { id: organization.id },
+      where: { id: bakery.id },
       data: {
         stripeChargesEnabled: accountStatus.charges_enabled,
         stripePayoutsEnabled: accountStatus.payouts_enabled,
@@ -50,7 +39,7 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({
-      success: true,
+      success: true,  
       status: accountStatus,
     });
   } catch (error) {

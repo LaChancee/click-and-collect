@@ -17,6 +17,7 @@ import { fr } from "date-fns/locale";
 import Image from "next/image";
 import Link from "next/link";
 import { createOrderAction } from "../_actions/create-order.action";
+import { createStripeCheckoutAction } from "../_actions/create-stripe-checkout.action";
 import { toast } from "sonner";
 
 interface TimeSlot {
@@ -98,9 +99,30 @@ export function CheckoutClient({ bakerySlug, timeSlots }: CheckoutClientProps) {
         toast.success("Commande créée avec succès !");
 
         if (paymentMethod === "CARD_ONLINE") {
-          // Rediriger vers Stripe (à implémenter plus tard)
+          // Créer une session de paiement Stripe
           toast.info("Redirection vers le paiement...");
-          // router.push(`/checkout/payment?orderId=${result.orderId}`);
+
+          try {
+            const stripeResult = await createStripeCheckoutAction({
+              timeSlotId: selectedTimeSlot,
+              items: cartItems.map(item => ({
+                articleId: item.id,
+                quantity: item.quantity,
+              })),
+              customerInfo,
+              notes,
+            });
+
+            if (stripeResult.success && stripeResult.url) {
+              // Rediriger vers Stripe Checkout
+              window.location.href = stripeResult.url;
+            } else {
+              toast.error(stripeResult.error || "Erreur lors de la création du paiement");
+            }
+          } catch (stripeError) {
+            console.error("Erreur Stripe:", stripeError);
+            toast.error("Erreur lors de la redirection vers le paiement");
+          }
         } else {
           // Rediriger vers la page de confirmation
           router.push(`/shop/order-confirmation?orderNumber=${result.orderNumber}`);

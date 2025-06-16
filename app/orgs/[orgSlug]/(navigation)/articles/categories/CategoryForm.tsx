@@ -39,7 +39,6 @@ export function CategoryForm({ orgSlug, orgId }: { orgSlug: string, orgId: strin
       if (!orgId) {
         throw new Error("ID de l'organisation non disponible");
       }
-      seedBakeryCategories(orgId);
       return resolveActionResult(createCategory({
         ...values,
         orgId,

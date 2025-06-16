@@ -188,4 +188,31 @@ export class StripeService {
   calculateApplicationFee(amount: number, feePercentage: number = 3): number {
     return Math.round((amount * feePercentage) / 100);
   }
+
+  // Créer une Account Session pour les composants embedded
+  async createAccountSession({
+    account,
+    components,
+  }: {
+    account: string;
+    components: {
+      account_onboarding?: { enabled: boolean };
+      account_management?: {
+        enabled: boolean;
+        features?: { external_account_collection?: boolean };
+      };
+    };
+  }) {
+    try {
+      const accountSession = await stripe.accountSessions.create({
+        account,
+        components,
+      });
+
+      return accountSession;
+    } catch (error) {
+      console.error("Erreur création Account Session:", error);
+      throw error;
+    }
+  }
 }
