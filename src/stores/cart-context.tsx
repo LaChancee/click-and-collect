@@ -10,12 +10,14 @@ export interface CartItem {
   imageUrl?: string | null;
   bakeryId: string;
   bakeryName: string;
+  bakerySlug: string;
 }
 
 interface CartState {
   items: CartItem[];
   bakeryId: string | null;
   bakeryName: string | null;
+  bakerySlug: string | null;
 }
 
 type CartAction =
@@ -23,7 +25,7 @@ type CartAction =
   | { type: "REMOVE_ITEM"; payload: string }
   | { type: "UPDATE_QUANTITY"; payload: { id: string; quantity: number } }
   | { type: "CLEAR_CART" }
-  | { type: "SET_BAKERY"; payload: { bakeryId: string; bakeryName: string } }
+  | { type: "SET_BAKERY"; payload: { bakeryId: string; bakeryName: string; bakerySlug: string } }
   | { type: "LOAD_FROM_STORAGE"; payload: CartState };
 
 const CartContext = createContext<{
@@ -33,7 +35,7 @@ const CartContext = createContext<{
   removeItem: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
-  setBakery: (bakeryId: string, bakeryName: string) => void;
+  setBakery: (bakeryId: string, bakeryName: string, bakerySlug: string) => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
   getItemQuantity: (itemId: string) => number;
@@ -50,6 +52,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
           items: [{ ...item, quantity: item.quantity || 1 }],
           bakeryId: item.bakeryId,
           bakeryName: item.bakeryName,
+          bakerySlug: item.bakerySlug,
         };
       }
 
@@ -66,6 +69,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
           items: updatedItems,
           bakeryId: item.bakeryId,
           bakeryName: item.bakeryName,
+          bakerySlug: item.bakerySlug,
         };
       } else {
         // Ajouter un nouvel article
@@ -74,6 +78,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
           items: [...state.items, { ...item, quantity: item.quantity || 1 }],
           bakeryId: item.bakeryId,
           bakeryName: item.bakeryName,
+          bakerySlug: item.bakerySlug,
         };
       }
     }
@@ -86,6 +91,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         // Si le panier est vide, réinitialiser la boulangerie
         bakeryId: updatedItems.length === 0 ? null : state.bakeryId,
         bakeryName: updatedItems.length === 0 ? null : state.bakeryName,
+        bakerySlug: updatedItems.length === 0 ? null : state.bakerySlug,
       };
     }
 
@@ -108,10 +114,11 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         items: [],
         bakeryId: null,
         bakeryName: null,
+        bakerySlug: null,
       };
 
     case "SET_BAKERY": {
-      const { bakeryId, bakeryName } = action.payload;
+      const { bakeryId, bakeryName, bakerySlug } = action.payload;
 
       // Si on change de boulangerie, vider le panier
       if (state.bakeryId && state.bakeryId !== bakeryId) {
@@ -119,6 +126,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
           items: [],
           bakeryId,
           bakeryName,
+          bakerySlug,
         };
       }
 
@@ -126,6 +134,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         ...state,
         bakeryId,
         bakeryName,
+        bakerySlug,
       };
     }
 
@@ -141,6 +150,7 @@ const initialState: CartState = {
   items: [],
   bakeryId: null,
   bakeryName: null,
+  bakerySlug: null,
 };
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
@@ -190,8 +200,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     dispatch({ type: "CLEAR_CART" });
   }, []);
 
-  const setBakery = useCallback((bakeryId: string, bakeryName: string) => {
-    dispatch({ type: "SET_BAKERY", payload: { bakeryId, bakeryName } });
+  const setBakery = useCallback((bakeryId: string, bakeryName: string, bakerySlug: string) => {
+    dispatch({ type: "SET_BAKERY", payload: { bakeryId, bakeryName, bakerySlug } });
   }, []);
 
   const getTotalItems = useCallback(() => {

@@ -56,13 +56,13 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
 
   // Définir la boulangerie actuelle au chargement
   useEffect(() => {
-    if (bakery?.id && bakery?.name) {
-      setBakery(bakery.id, bakery.name);
+    if (bakery?.id && bakery?.name && bakery?.slug) {
+      setBakery(bakery.id, bakery.name, bakery.slug);
     }
-  }, [bakery?.id, bakery?.name, setBakery]);
+  }, [bakery?.id, bakery?.name, bakery?.slug, setBakery]);
 
   const handleAddToCart = useCallback((article: Article) => {
-    if (!bakery?.id || !bakery?.name) {
+    if (!bakery?.id || !bakery?.name || !bakery?.slug) {
       console.error("Bakery data is missing");
       return;
     }
@@ -76,8 +76,9 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
       imageUrl: article.imageUrl || article.image,
       bakeryId: bakery.id,
       bakeryName: bakery.name,
+      bakerySlug: bakery.slug,
     });
-  }, [addItem, bakery?.id, bakery?.name]);
+  }, [addItem, bakery?.id, bakery?.name, bakery?.slug]);
 
   const handleUpdateQuantity = useCallback((articleId: string, change: number) => {
     const currentQuantity = getItemQuantity(articleId);
@@ -97,74 +98,53 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
   }, {} as Record<string, Article[]>);
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-8">
       {categories.map((category) => {
-        const categoryArticles = articlesByCategory[category.id];
+        const categoryArticles = articlesByCategory[category.id] || [];
 
-        if (!categoryArticles || categoryArticles.length === 0) {
+        if (categoryArticles.length === 0) {
           return null;
         }
 
         return (
-          <div key={category.id} id={`category-${category.slug}`}>
-            {/* Category Header */}
-            <div className="mb-4 sm:mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-                {category.name}
-              </h2>
-              <div className="w-8 sm:w-12 h-1 bg-black rounded-full"></div>
-            </div>
+          <div key={category.id} id={category.slug} className="scroll-mt-4">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">{category.name}</h2>
 
-            {/* Articles Grid - Responsive */}
-            <div className="grid grid-cols-1 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {categoryArticles.map((article) => {
                 const quantity = getItemQuantity(article.id);
-                const price = parseFloat(article.price);
 
                 return (
                   <div
                     key={article.id}
-                    className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200 flex min-h-[100px] sm:min-h-[120px]"
+                    className="group bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
                   >
-                    {/* Article Info à gauche - Layout horizontal */}
-                    <div className="flex-1 p-3 sm:p-4 flex flex-col justify-center min-w-0">
-                      <h3 className="font-normal text-black mb-1 text-lg sm:text-xl leading-tight">
-                        {article.name}
-                      </h3>
-                      {article.description && (
-                        <p className="text-gray-600 mb-2 text-sm leading-relaxed line-clamp-2">
-                          {article.description}
-                        </p>
-                      )}
-                      <div className="flex items-center justify-between mt-auto">
-                        <span className="text-xl sm:text-2xl font-bold text-black">
-                          {price.toFixed(2)}€
-                        </span>
+                    <div className="relative">
+                      {/* Image */}
+                      <div className="aspect-[4/3] bg-gray-100 overflow-hidden">
+                        {article.imageUrl || article.image ? (
+                          <Image
+                            src={article.imageUrl || article.image || ''}
+                            alt={article.name}
+                            width={400}
+                            height={300}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-6xl">
+                            🍞
+                          </div>
+                        )}
                       </div>
-                    </div>
 
-                    {/* Article Image à droite */}
-                    <div className="w-32 sm:w-36 md:w-40 relative bg-gray-100 flex-shrink-0">
-                      {article.imageUrl || article.image ? (
-                        <Image
-                          src={article.imageUrl || article.image || ''}
-                          alt={article.name}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-2xl">
-                          🥖
-                        </div>
-                      )}
-
+                      {/* Stock badge */}
                       {!article.isAvailable && (
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                          <Badge variant="destructive">Indisponible</Badge>
+                        <div className="absolute top-2 left-2">
+                          <Badge variant="destructive">Épuisé</Badge>
                         </div>
                       )}
 
-                      {/* Bouton en bas à droite de l'image */}
+                      {/* Add to cart button */}
                       {article.isAvailable && (
                         <div className="absolute bottom-2 right-2">
                           {quantity === 0 ? (
@@ -201,6 +181,31 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
                         </div>
                       )}
                     </div>
+
+                    {/* Content */}
+                    <div className="p-4">
+                      <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">
+                        {article.name}
+                      </h3>
+
+                      {article.description && (
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                          {article.description}
+                        </p>
+                      )}
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-bold text-gray-900">
+                          {parseFloat(article.price).toFixed(2)}€
+                        </span>
+
+                        {article.stockCount && article.stockCount <= 5 && (
+                          <Badge variant="outline" className="text-xs">
+                            Plus que {article.stockCount}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 );
               })}
@@ -208,19 +213,6 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
           </div>
         );
       })}
-
-      {/* Empty state */}
-      {articles.length === 0 && (
-        <div className="text-center py-8 sm:py-12">
-          <ShoppingCart className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
-            Aucun article disponible
-          </h3>
-          <p className="text-sm sm:text-base text-gray-600">
-            Cette boulangerie n'a pas encore ajouté d'articles à son catalogue.
-          </p>
-        </div>
-      )}
     </div>
   );
 } 

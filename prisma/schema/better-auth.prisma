@@ -88,6 +88,13 @@ model Organization {
   openingHours String? // Format JSON pour gérer les horaires par jour
   description  String?
 
+  // Stripe Connect pour les boulangeries
+  stripeAccountId      String? // ID du compte Stripe Connect
+  stripeAccountStatus  String? // Statut du compte (pending, enabled, disabled)
+  stripeOnboardingUrl  String? // URL pour finaliser l'onboarding
+  stripeChargesEnabled Boolean @default(false) // Peut recevoir des paiements
+  stripePayoutsEnabled Boolean @default(false) // Peut recevoir des virements
+
   // Champs spécifiques pour les clients
   isCustomer    Boolean   @default(false)
   phoneNumber   String?

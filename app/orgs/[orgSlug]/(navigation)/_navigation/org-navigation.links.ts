@@ -8,6 +8,7 @@ import {
   AlertCircle,
   CreditCard,
   Home,
+  Package,
   Percent,
   Settings,
   ShoppingCart,
@@ -66,6 +67,11 @@ export const ORGANIZATION_LINKS: NavigationGroup[] = [
         href: `${ORGANIZATION_PATH}/articles`,
         Icon: ShoppingCart,
         label: "Articles",
+      },
+      {
+        href: `${ORGANIZATION_PATH}/orders`,
+        Icon: Package,
+        label: "Commandes",
       },
       {
         href: `${ORGANIZATION_PATH}/promotions`,

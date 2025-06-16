@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { ShoppingCart, X, Plus, Minus, Clock, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -12,6 +13,7 @@ const deliveryFee: number = 0; // Gratuit pour le click & collect
 const minimumOrder = 10;
 
 export function CartSidebar() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const {
     state,
@@ -23,6 +25,7 @@ export function CartSidebar() {
 
   const cartItems = state.items;
   const bakeryName = state.bakeryName;
+  const bakerySlug = state.bakerySlug;
   const subtotal = getTotalPrice();
   const total = subtotal + deliveryFee;
   const itemCount = getTotalItems();
@@ -35,6 +38,15 @@ export function CartSidebar() {
       updateQuantity(id, newQuantity);
     }
   }, [removeItem, updateQuantity]);
+
+  const handleCheckout = useCallback(() => {
+    if (canCheckout && bakerySlug) {
+      // Fermer le modal mobile si ouvert
+      setIsOpen(false);
+      // Utiliser router.push au lieu de window.location.href
+      router.push(`/shop/checkout?bakery=${bakerySlug}`);
+    }
+  }, [canCheckout, bakerySlug, router]);
 
   const CartContent = () => (
     <div className="flex flex-col h-full">
@@ -158,10 +170,7 @@ export function CartSidebar() {
             <Button
               className="w-full bg-black hover:bg-gray-800 text-white h-11 lg:h-12 text-base font-medium touch-manipulation mobile-tap active:scale-[0.98]"
               disabled={!canCheckout}
-              onClick={() => {
-                // TODO: Rediriger vers la page de checkout
-                console.log("Redirection vers checkout");
-              }}
+              onClick={handleCheckout}
             >
               {canCheckout ? (
                 `Commander • ${total.toFixed(2)}€`
