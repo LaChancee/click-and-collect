@@ -69,7 +69,6 @@ export function OrgSidebar({
         ))}
       </SidebarContent>
       <SidebarFooter className="flex flex-col gap-2">
-        <UpgradeCard />
         <SidebarUserButton />
       </SidebarFooter>
       <SidebarRail />

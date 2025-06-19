@@ -60,11 +60,6 @@ export const ORGANIZATION_LINKS: NavigationGroup[] = [
         label: "Dashboard",
       },
       {
-        href: `${ORGANIZATION_PATH}/users`,
-        Icon: User,
-        label: "Users",
-      },
-      {
         href: `${ORGANIZATION_PATH}/articles`,
         Icon: ShoppingCart,
         label: "Articles",
