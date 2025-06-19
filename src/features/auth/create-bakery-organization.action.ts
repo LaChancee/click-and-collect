@@ -49,7 +49,9 @@ export const createBakeryOrganizationAction = authAction
 
     // Créer l'organisation boulangerie
     const bakery = await prisma.organization.create({
-      data: {
+      data: { 
+        id: crypto.randomUUID(),
+        createdAt: new Date(),
         name: input.bakeryName,
         slug,
         email: input.bakeryEmail,
@@ -59,12 +61,7 @@ export const createBakeryOrganizationAction = authAction
         isBakery: true,
         isCustomer: false,
         // Créer immédiatement le membership pour l'utilisateur
-        members: {
-          create: {
-            userId: user.id,
-            role: "owner", // Le créateur est propriétaire
-          },
-        },
+        
       },
     });
 
