@@ -59,8 +59,8 @@ export const BakerySignUpForm = () => {
         }),
       );
 
-      if (userResult.error) {
-        throw new Error(userResult.error.message || "Erreur lors de la création du compte");
+      if (!userResult.user) {
+        throw new Error("Erreur lors de la création du compte");
       }
 
       // Attendre un peu pour que la session soit établie
@@ -76,9 +76,8 @@ export const BakerySignUpForm = () => {
           bakeryEmail: values.email,
         })
       );
-
       return {
-        user: userResult.data,
+        user: userResult.user,
         bakery: bakeryResult,
       };
     },
