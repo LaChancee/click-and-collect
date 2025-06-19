@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
-import { sendOrderConfirmationEmail } from "@/lib/email/send-order-confirmation";
 import { nanoid } from "nanoid";
+import { sendOrderConfirmationEmail } from "../../../../lib/email/send-order-confirmation";
 
 export async function POST(request: NextRequest) {
   const body = await request.text();

@@ -68,7 +68,7 @@ export const NewOrganizationForm = () => {
         name: values.name,
         slug: values.slug,
       });
-      seedBakeryCategories(result?.data?.id || "");
+      seedBakeryCategories(result.data?.id || "");
 
       if (result.error) {
         toast.error(result.error.message);

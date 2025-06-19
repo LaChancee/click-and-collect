@@ -121,13 +121,19 @@ export default async function OrdersPage() {
                         <span>Retrait prévu</span>
                       </div>
                       <div className="text-sm text-gray-600">
-                        {new Date(order.timeSlot.date).toLocaleDateString("fr-FR", {
+                        {new Date(order.timeSlot.startTime).toLocaleDateString("fr-FR", {
                           weekday: "long",
                           day: "numeric",
                           month: "long",
                         })}
                         <br />
-                        {order.timeSlot.startTime} - {order.timeSlot.endTime}
+                        {order.timeSlot.startTime.toLocaleTimeString("fr-FR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })} - {order.timeSlot.endTime.toLocaleTimeString("fr-FR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </div>
                     </div>
                   )}

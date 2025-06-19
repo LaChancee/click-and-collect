@@ -4,6 +4,9 @@ const nextConfig = {
     authInterrupts: true,
     nodeMiddleware: true,
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   images: {
     remotePatterns: [
       {

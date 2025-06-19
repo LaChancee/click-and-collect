@@ -1,7 +1,7 @@
 import { createRouteHandler } from "uploadthing/next";
 
 import { ourFileRouter } from "./core";
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 // Créer le gestionnaire
 const handler = createRouteHandler({
   router: ourFileRouter,
