@@ -78,7 +78,7 @@ export class EmailService {
     const statusLabel =
       statusLabels[params.status as keyof typeof statusLabels] || params.status;
 
-    return this.sendEmail({
+    return this.getInstance().sendEmail({
       to: params.to,
       subject: `${statusLabel} - Commande #${params.orderNumber} - ${params.bakeryName}`,
       html: params.htmlContent,

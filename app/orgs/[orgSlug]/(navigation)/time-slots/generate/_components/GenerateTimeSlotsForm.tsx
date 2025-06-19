@@ -16,6 +16,7 @@ import { format, addDays, startOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Calendar, AlertCircle } from "lucide-react";
+import React from "react";
 
 type GenerateTimeSlotsFormType = z.infer<typeof GenerateTimeSlotsSchema>;
 
@@ -179,7 +180,7 @@ export function GenerateTimeSlotsForm({ orgSlug, selectedDate, settings }: Gener
                                     ? field.onChange([...field.value, day.value])
                                     : field.onChange(
                                         field.value?.filter(
-                                          (value) => value !== day.value
+                                          (value: number) => value !== day.value
                                         )
                                       )
                                 }}

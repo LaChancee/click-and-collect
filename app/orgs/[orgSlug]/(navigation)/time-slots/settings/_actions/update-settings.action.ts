@@ -5,13 +5,15 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { TimeSlotSettingsSchema } from "../_schemas/time-slot-settings.schema";
 
-const UpdateSettingsSchema = TimeSlotSettingsSchema.extend({
-  settingsId: z.string(),
-});
+const UpdateSettingsSchema = TimeSlotSettingsSchema.and(
+  z.object({
+    settingsId: z.string(),
+  }),
+);
 
 export const updateTimeSlotSettingsAction = orgAction
   .metadata({
-    roles: ["OWNER", "ADMIN"],
+    roles: ["owner", "admin"],
   })
   .schema(UpdateSettingsSchema)
   .action(async ({ parsedInput: input, ctx }) => {
@@ -21,7 +23,7 @@ export const updateTimeSlotSettingsAction = orgAction
     const existingSettings = await prisma.settings.findUnique({
       where: {
         id: settingsId,
-        bakeryId: ctx.org.id,
+        bakeryId: ctx.user.id,
       },
     });
 

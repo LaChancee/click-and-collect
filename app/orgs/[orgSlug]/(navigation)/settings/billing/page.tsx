@@ -5,10 +5,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Pricing } from "@/features/plans/pricing-section";
-import { auth } from "@/lib/auth";
 import { combineWithParentMetadata } from "@/lib/metadata";
 import { getRequiredCurrentOrgCache } from "@/lib/react/cache";
-import { headers } from "next/headers";
+import { prisma } from "@/lib/prisma";
+import { getPlanLimits } from "@/lib/auth/auth-plans";
 import { OrgBilling } from "./org-billing";
 
 export const generateMetadata = combineWithParentMetadata({
@@ -23,14 +23,13 @@ export default async function OrgBillingPage() {
     },
   });
 
-  const subscriptions = await auth.api.listActiveSubscriptions({
-    headers: await headers(),
-    query: {
+  const subscription = await prisma.subscription.findFirst({
+    where: {
       referenceId: org.id,
     },
   });
 
-  if (!subscriptions[0]) {
+  if (!subscription) {
     return (
       <div className="flex flex-col gap-4">
         <Card>
@@ -46,11 +45,17 @@ export default async function OrgBillingPage() {
     );
   }
 
+  // Add limits to the subscription based on the plan
+  const subscriptionWithLimits = {
+    ...subscription,
+    limits: getPlanLimits(subscription.plan),
+  };
+
   return (
     <OrgBilling
       orgId={org.id}
       orgSlug={org.slug}
-      subscription={subscriptions[0]}
+      subscription={subscriptionWithLimits}
     />
   );
 }

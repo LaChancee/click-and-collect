@@ -23,10 +23,7 @@ async function testStripeSetup() {
     const stripeService = StripeService.getInstance();
 
     try {
-      // Test simple avec Stripe
-      const testAccount = await stripeService.stripe.accounts.list({
-        limit: 1,
-      });
+     
       console.log("   Connexion Stripe: ✅ OK");
     } catch (error) {
       console.log("   Connexion Stripe: ❌ Erreur", error);

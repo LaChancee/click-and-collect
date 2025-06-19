@@ -2,10 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
-import {
-  ConnectAccountOnboarding,
-  ConnectComponentsProvider,
-} from "@stripe/react-stripe-js";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -107,20 +103,18 @@ export function EmbeddedStripeConnect(props: EmbeddedStripeConnectProps) {
         <CardTitle>Configuration de votre compte Stripe</CardTitle>
       </CardHeader>
       <CardContent>
-        <ConnectComponentsProvider
-          stripePromise={stripePromise}
-          connectInstance={clientSecret}
-        >
-          <ConnectAccountOnboarding
-            onExit={() => {
-              console.log("Onboarding fermé");
-              props.onComplete?.();
+        <div className="text-center py-8">
+          <p className="text-muted-foreground mb-4">
+            Pour configurer votre compte Stripe Connect, vous devez utiliser l'interface web de Stripe.
+          </p>
+          <Button
+            onClick={() => {
+              window.open(`https://connect.stripe.com/accounts/${props.stripeAccountId}`, "_blank");
             }}
-            onStepChange={(step) => {
-              console.log("Étape changée:", step);
-            }}
-          />
-        </ConnectComponentsProvider>
+          >
+            Ouvrir Stripe Connect
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

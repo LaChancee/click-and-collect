@@ -7,7 +7,7 @@ import { addDays, setHours, setMinutes, startOfDay, getDay } from "date-fns";
 
 export const generateTimeSlotsAction = orgAction
   .metadata({
-    roles: ["OWNER", "ADMIN"],
+    roles: ["owner", "admin"],
   })
   .schema(GenerateTimeSlotsSchema)
   .action(async ({ parsedInput: input, ctx }) => {
@@ -37,7 +37,7 @@ export const generateTimeSlotsAction = orgAction
     if (replaceExisting) {
       await prisma.timeSlot.deleteMany({
         where: {
-          bakeryId: ctx.org.id,
+          bakeryId: ctx.user.id,
           startTime: {
             gte: startOfDay(start),
             lte: addDays(startOfDay(end), 1),
@@ -76,7 +76,7 @@ export const generateTimeSlotsAction = orgAction
           if (!replaceExisting) {
             const existingSlot = await prisma.timeSlot.findFirst({
               where: {
-                bakeryId: ctx.org.id,
+                bakeryId: ctx.user.id,
                 startTime: slotStartTime,
                 endTime: slotEndTime,
               },
@@ -93,7 +93,7 @@ export const generateTimeSlotsAction = orgAction
             endTime: slotEndTime,
             maxOrders,
             isActive: true,
-            bakeryId: ctx.org.id,
+            bakeryId: ctx.user.id,
           });
 
           currentMinutes += duration;

@@ -1,14 +1,30 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { getRequiredCurrentOrg } from "@/lib/organizations/get-org";
+import { getRequiredCurrentOrgCache } from "@/lib/react/cache";
+import { prisma } from "@/lib/prisma";
 import { StripeConnectButton } from "./_components/StripeConnectButton";
 import { StripeAccountStatus } from "./_components/StripeAccountStatus";
 import { CheckCircle, AlertCircle, Clock, CreditCard } from "lucide-react";
+import type { Organization } from "@prisma/client";
 
 export default async function StripeSettingsPage() {
-  const organization = await getRequiredCurrentOrg();
+  const orgContext = await getRequiredCurrentOrgCache();
 
-  if (!organization.isBakery) {
+  const organization = await prisma.organization.findUnique({
+    where: { id: orgContext.id },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      isBakery: true,
+      stripeAccountId: true,
+      stripeAccountStatus: true,
+      stripeChargesEnabled: true,
+      stripePayoutsEnabled: true,
+    },
+  }) as NonNullable<Pick<Organization, 'id' | 'name' | 'slug' | 'isBakery' | 'stripeAccountId' | 'stripeAccountStatus' | 'stripeChargesEnabled' | 'stripePayoutsEnabled'>>;
+
+  if (!organization || !organization.isBakery) {
     return (
       <div className="container mx-auto py-8">
         <Card>
@@ -80,7 +96,15 @@ export default async function StripeSettingsPage() {
               <StripeConnectButton />
             </div>
           ) : (
-            <StripeAccountStatus organization={organization} />
+            <StripeAccountStatus organization={{
+              id: organization.id,
+              name: organization.name,
+              slug: organization.slug ?? "",
+              stripeAccountId: organization.stripeAccountId,
+              stripeAccountStatus: organization.stripeAccountStatus,
+              stripeChargesEnabled: organization.stripeChargesEnabled,
+              stripePayoutsEnabled: organization.stripePayoutsEnabled,
+            }} />
           )}
         </CardContent>
       </Card>

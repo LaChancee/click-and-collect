@@ -30,9 +30,14 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { openStripePortalAction } from "./billing.action";
+import type { Subscription } from "@prisma/client";
+
+type SubscriptionWithLimits = Subscription & {
+  limits?: Record<string, number>;
+};
 
 export function OrgBilling(props: {
-  subscription: CurrentOrgPayload["subscription"];
+  subscription: SubscriptionWithLimits | null;
   orgId: string;
   orgSlug: string;
 }) {
@@ -68,9 +73,9 @@ export function OrgBilling(props: {
   const daysRemaining =
     subscription.status === "trialing"
       ? differenceInDays(
-          new Date(subscription.periodEnd ?? new Date()),
-          new Date(),
-        )
+        new Date(subscription.periodEnd ?? new Date()),
+        new Date(),
+      )
       : 0;
 
   const trialProgress =
@@ -182,7 +187,7 @@ export function OrgBilling(props: {
                     <div className="mb-2 flex items-center space-x-2">
                       <Icon className="text-primary size-5" />
                       <h4 className="font-medium">
-                        {limitConfig.getLabel(value)}
+                        {limitConfig.getLabel(value as number)}
                       </h4>
                     </div>
                     <p className="text-muted-foreground text-sm">

@@ -67,7 +67,6 @@ export default async function RoutePage(props: PageParams) {
                 <OrgDetailsForm defaultValues={{
                   logo: org.logo,
                   name: org.name,
-                  email: org.email,
                 }} />
               </CardContent>
             </Card>
@@ -87,7 +86,7 @@ export default async function RoutePage(props: PageParams) {
                     organization={{
                       id: org.id,
                       name: org.name,
-                      slug: org.slug,
+                      slug: org.slug ?? "",
                       stripeAccountId: org.stripeAccountId,
                       stripeAccountStatus: org.stripeAccountStatus,
                       stripeChargesEnabled: org.stripeChargesEnabled,

@@ -6,7 +6,7 @@ export const AuthButton = async () => {
 
   if (user) {
     const bakeryUser = await getBakeryUser();
-    return <LoggedInButton user={user} bakeryUser={bakeryUser} />;
+    return <LoggedInButton user={user} bakeryUser={bakeryUser as any} />;
   }
 
   return <SignInButton />;

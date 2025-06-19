@@ -4,9 +4,19 @@ import { ActionError, orgAction } from "@/lib/actions/safe-actions";
 import { hasPermission } from "@/lib/auth/auth-org";
 import { getServerUrl } from "@/lib/server-url";
 import { stripe } from "@/lib/stripe";
+import { prisma } from "@/lib/prisma";
 
 export const openStripePortalAction = orgAction.action(async ({ ctx: org }) => {
-  const stripeCustomerId = org.subscription?.stripeCustomerId;
+  const subscription = await prisma.subscription.findFirst({
+    where: {
+      referenceId: org.id,
+    },
+    select: {
+      stripeCustomerId: true,
+    },
+  });
+
+  const stripeCustomerId = subscription?.stripeCustomerId;
 
   if (!stripeCustomerId) {
     throw new ActionError("No stripe customer id found");
