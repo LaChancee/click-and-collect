@@ -49,7 +49,7 @@ export const createBakeryOrganizationAction = authAction
 
     // Créer l'organisation boulangerie
     const bakery = await prisma.organization.create({
-      data: { 
+      data: {
         id: crypto.randomUUID(),
         createdAt: new Date(),
         name: input.bakeryName,
@@ -61,7 +61,6 @@ export const createBakeryOrganizationAction = authAction
         isBakery: true,
         isCustomer: false,
         // Créer immédiatement le membership pour l'utilisateur
-        
       },
     });
 
@@ -92,7 +91,6 @@ export const createBakeryOrganizationAction = authAction
         storeCloseTime: "19:00",
         timeSlotDuration: 15,
         preOrderDaysAhead: 3,
-        paymentThreshold: 20,
       },
     });
 

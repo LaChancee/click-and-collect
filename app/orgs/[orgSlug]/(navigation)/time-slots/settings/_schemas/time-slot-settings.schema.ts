@@ -27,7 +27,6 @@ export const TimeSlotSettingsSchema = z
       .min(1, "Au moins 1 jour à l'avance")
       .max(30, "Maximum 30 jours à l'avance"),
     minOrderValue: z.number().min(0).optional(),
-    paymentThreshold: z.number().min(0).optional(),
   })
   .refine(
     (data) => {

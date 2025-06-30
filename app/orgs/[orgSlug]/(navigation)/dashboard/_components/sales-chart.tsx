@@ -13,12 +13,8 @@ interface SalesData {
 
 const chartConfig = {
   sales: {
-    label: "Ventes",
-    color: "hsl(var(--chart-1))",
-  },
-  orders: {
-    label: "Commandes",
-    color: "hsl(var(--chart-2))",
+    label: "Ventes (€)",
+    color: "hsl(var(--primary))",
   },
 } satisfies ChartConfig;
 
@@ -114,9 +110,9 @@ export function SalesChart() {
             <Area
               dataKey="sales"
               type="natural"
-              fill="var(--color-sales)"
+              fill="hsl(var(--primary))"
               fillOpacity={0.4}
-              stroke="var(--color-sales)"
+              stroke="hsl(var(--primary))"
               stackId="a"
             />
           </AreaChart>

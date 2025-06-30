@@ -58,7 +58,6 @@ export default async function TimeSlotSettingsPage(props: PageParams<{ orgSlug: 
             settings={{
               ...settings,
               minOrderValue: settings.minOrderValue ? Number(settings.minOrderValue) : null,
-              paymentThreshold: settings.paymentThreshold ? Number(settings.paymentThreshold) : null,
             }}
           />
         </div>

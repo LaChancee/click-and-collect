@@ -23,6 +23,7 @@ import {
 import { format, addDays, startOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { PageParams } from "@/types/next";
+import { QuickTimeSlots } from "./_components/quick-time-slots";
 
 // Définir explicitement le mode dynamique pour éviter la mise en cache
 export const dynamic = "force-dynamic";
@@ -166,6 +167,9 @@ export default async function TimeSlotsPage(props: PageParams<{ orgSlug: string 
             </Card>
           </div>
 
+          {/* Création rapide de créneaux */}
+          <QuickTimeSlots orgSlug={orgSlug} />
+
           <Separator />
 
           {/* Paramètres actuels */}
@@ -274,10 +278,10 @@ export default async function TimeSlotsPage(props: PageParams<{ orgSlug: string 
                                 <Card
                                   key={slot.id}
                                   className={`transition-colors ${isFull
-                                      ? "border-red-200 bg-red-50"
-                                      : isAlmostFull
-                                        ? "border-orange-200 bg-orange-50"
-                                        : "border-green-200 bg-green-50"
+                                    ? "border-red-200 bg-red-50"
+                                    : isAlmostFull
+                                      ? "border-orange-200 bg-orange-50"
+                                      : "border-green-200 bg-green-50"
                                     }`}
                                 >
                                   <CardContent className="p-4">

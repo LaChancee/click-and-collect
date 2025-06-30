@@ -32,6 +32,10 @@ const chartConfig = {
     label: "Terminées",
     color: "hsl(var(--chart-5))",
   },
+  CANCELLED: {
+    label: "Annulées",
+    color: "hsl(var(--destructive))",
+  },
 } satisfies ChartConfig;
 
 export function OrdersStatusChart() {

@@ -43,7 +43,6 @@ export const updateTimeSlotSettingsAction = orgAction
         maxOrdersPerSlot: settingsData.maxOrdersPerSlot,
         preOrderDaysAhead: settingsData.preOrderDaysAhead,
         minOrderValue: settingsData.minOrderValue,
-        paymentThreshold: settingsData.paymentThreshold,
       },
     });
 

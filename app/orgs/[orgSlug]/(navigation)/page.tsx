@@ -7,8 +7,6 @@ import {
 import type { PageParams } from "@/types/next";
 import { BakeryStatsCards } from "./dashboard/_components/bakery-stats-cards";
 import { RecentOrdersCard } from "./dashboard/_components/recent-orders-card";
-import { SalesChart } from "./dashboard/_components/sales-chart";
-import { OrdersStatusChart } from "./dashboard/_components/orders-status-chart";
 import { TimeSlotsOverview } from "./dashboard/_components/time-slots-overview";
 
 export default async function DashboardPage(
@@ -26,14 +24,8 @@ export default async function DashboardPage(
         {/* Statistiques principales */}
         <BakeryStatsCards />
 
-        {/* Graphiques et données */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          <SalesChart />
-          <OrdersStatusChart />
-        </div>
-
         {/* Créneaux horaires et commandes récentes */}
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-6 lg:grid-cols-2">
           <TimeSlotsOverview />
           <RecentOrdersCard />
         </div>

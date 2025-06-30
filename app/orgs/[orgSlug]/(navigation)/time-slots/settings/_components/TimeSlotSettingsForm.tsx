@@ -25,7 +25,6 @@ interface TimeSlotSettingsFormProps {
     maxOrdersPerSlot: number;
     preOrderDaysAhead: number;
     minOrderValue?: number | null;
-    paymentThreshold?: number | null;
   };
 }
 
@@ -41,7 +40,6 @@ export function TimeSlotSettingsForm({ orgSlug, settings }: TimeSlotSettingsForm
       maxOrdersPerSlot: settings.maxOrdersPerSlot,
       preOrderDaysAhead: settings.preOrderDaysAhead,
       minOrderValue: settings.minOrderValue ? Number(settings.minOrderValue) : undefined,
-      paymentThreshold: settings.paymentThreshold ? Number(settings.paymentThreshold) : undefined,
     }
   });
 
@@ -193,28 +191,6 @@ export function TimeSlotSettingsForm({ orgSlug, settings }: TimeSlotSettingsForm
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Montant minimum de commande (€)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="Optionnel"
-                    {...field}
-                    value={field.value || ""}
-                    onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="paymentThreshold"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Seuil de paiement en ligne obligatoire (€)</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
