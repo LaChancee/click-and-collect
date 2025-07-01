@@ -12,6 +12,15 @@ import type { LayoutParams } from "@/types/next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+// Extraire la server action séparément
+async function signOutAction() {
+  "use server";
+  await auth.api.signOut({
+    headers: await headers(),
+  });
+  redirect("/auth/signin");
+}
+
 export default async function RouteLayout(props: LayoutParams) {
   const user = await getRequiredUser();
   return (
@@ -22,16 +31,8 @@ export default async function RouteLayout(props: LayoutParams) {
         </LayoutTitle>
       </LayoutHeader>
       <LayoutActions>
-        <form>
-          <SubmitButton
-            formAction={async () => {
-              "use server";
-              await auth.api.signOut({
-                headers: await headers(),
-              });
-              redirect("/auth/signin");
-            }}
-          >
+        <form action={signOutAction}>
+          <SubmitButton>
             Sign out
           </SubmitButton>
         </form>

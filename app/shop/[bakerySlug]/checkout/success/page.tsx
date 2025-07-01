@@ -3,9 +3,8 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, ArrowLeft, Receipt, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
-import { prisma } from "@/lib/prisma";
-import { StripeService } from "@/lib/stripe";
 import { redirect } from "next/navigation";
+import { getOrderFromStripeSessionAction } from "./get-order-from-session.action";
 
 interface SuccessPageProps {
   params: Promise<{
@@ -16,33 +15,6 @@ interface SuccessPageProps {
   }>;
 }
 
-async function getOrderFromStripeSession(sessionId: string) {
-  try {
-    const stripeService = StripeService.getInstance();
-    const session = await stripeService.retrieveCheckoutSession(sessionId);
-
-    if (session.metadata?.timeSlotId) {
-      // Rechercher la commande créée par le webhook
-      const order = await prisma.order.findFirst({
-        where: {
-          stripeSessionId: sessionId,
-          timeSlotId: session.metadata.timeSlotId,
-        },
-        select: {
-          orderNumber: true,
-        },
-      });
-
-      return order;
-    }
-
-    return null;
-  } catch (error) {
-    console.error("Erreur lors de la récupération de la commande:", error);
-    return null;
-  }
-}
-
 export default async function SuccessPage({ params, searchParams }: SuccessPageProps) {
   const { bakerySlug } = await params;
   const { session_id } = await searchParams;
@@ -51,7 +23,7 @@ export default async function SuccessPage({ params, searchParams }: SuccessPageP
 
   // Si on a un session_id, essayer de récupérer la commande
   if (session_id) {
-    const order = await getOrderFromStripeSession(session_id);
+    const order = await getOrderFromStripeSessionAction(session_id);
     if (order?.orderNumber) {
       // Rediriger vers la page de confirmation avec le numéro de commande
       redirect(`/shop/order-confirmation?orderNumber=${order.orderNumber}`);
