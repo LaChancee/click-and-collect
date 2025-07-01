@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { ContactSupportDialog } from "@/features/contact/support/contact-support-dialog";

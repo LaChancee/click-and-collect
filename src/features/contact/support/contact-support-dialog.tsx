@@ -24,7 +24,7 @@ import { useSession } from "@/lib/auth-client";
 import { env } from "@/lib/env";
 import Link from "next/link";
 import type { PropsWithChildren } from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { contactSupportAction } from "./contact-support.action";
 import type { ContactSupportSchemaType } from "./contact-support.schema";
@@ -34,14 +34,29 @@ type ContactSupportDialogProps = PropsWithChildren;
 
 export const ContactSupportDialog = (props: ContactSupportDialogProps) => {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const session = useSession();
-  const email = session.data?.user ? session.data.user.email : "";
+  
+  // Attendre que le composant soit monté côté client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const email = mounted && session.data?.user ? session.data.user.email : "";
+  
   const form = useZodForm({
     schema: ContactSupportSchema,
     defaultValues: {
       email: email,
     },
   });
+
+  // Mettre à jour l'email quand la session est chargée
+  useEffect(() => {
+    if (mounted && session.data?.user?.email) {
+      form.setValue('email', session.data.user.email);
+    }
+  }, [mounted, session.data?.user?.email, form]);
 
   const onSubmit = async (values: ContactSupportSchemaType) => {
     const result = await contactSupportAction(values);
@@ -80,21 +95,20 @@ export const ContactSupportDialog = (props: ContactSupportDialogProps) => {
           onSubmit={async (v) => onSubmit(v)}
           className="flex flex-col gap-4"
         >
-          {email ? null : (
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
+          {/* Toujours afficher le champ email, mais le pré-remplir si l'utilisateur est connecté */}
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="subject"
