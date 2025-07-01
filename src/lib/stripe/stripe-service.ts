@@ -189,6 +189,20 @@ export class StripeService {
     return Math.round((amount * feePercentage) / 100);
   }
 
+  // Récupérer les détails d'une session de checkout
+  async retrieveCheckoutSession(sessionId: string) {
+    try {
+      const session = await stripe.checkout.sessions.retrieve(sessionId, {
+        expand: ['line_items', 'customer_details'],
+      });
+
+      return session;
+    } catch (error) {
+      console.error("Erreur récupération session checkout:", error);
+      throw error;
+    }
+  }
+
   // Créer une Account Session pour les composants embedded
   async createAccountSession({
     account,

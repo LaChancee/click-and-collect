@@ -13,14 +13,16 @@ interface Category {
 
 interface CategoryTabsProps {
   categories: Category[];
+  hasMealDeals?: boolean;
 }
 
-export function CategoryTabs({ categories }: CategoryTabsProps) {
+export function CategoryTabs({ categories, hasMealDeals = false }: CategoryTabsProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  // Créer la liste des catégories avec "Tous" en premier
+  // Créer la liste des catégories avec "Tous" en premier et "Formules" si disponible
   const allCategories = [
     { id: "all", name: "TOUS", slug: "all", position: -1, isActive: true },
+    ...(hasMealDeals ? [{ id: "formules", name: "FORMULES", slug: "formules", position: -0.5, isActive: true }] : []),
     ...categories.map(cat => ({ ...cat, name: cat.name.toUpperCase() })),
   ];
 
@@ -31,19 +33,44 @@ export function CategoryTabs({ categories }: CategoryTabsProps) {
     if (categorySlug === "all") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      const element = document.getElementById(`category-${categorySlug}`);
+      // Corriger l'ID pour qu'il corresponde à ce qui est utilisé dans ArticleGrid
+      const element = document.getElementById(categorySlug);
       if (element) {
-        const headerHeight = 250; // Hauteur approximative du nouveau header
+        const headerHeight = 180; // Hauteur du header sticky
         const elementPosition = element.offsetTop - headerHeight;
         window.scrollTo({ top: elementPosition, behavior: "smooth" });
       }
     }
   };
 
+  // Détection automatique de la catégorie visible
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = allCategories.map(cat => ({
+        slug: cat.slug,
+        element: document.getElementById(cat.slug)
+      })).filter(item => item.element);
+
+      let current = "all";
+      for (const section of sections) {
+        if (section.element) {
+          const rect = section.element.getBoundingClientRect();
+          if (rect.top <= 200) { // 200px de buffer
+            current = section.slug;
+          }
+        }
+      }
+      setSelectedCategory(current);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [allCategories]);
+
   return (
-    <div className="sticky top-0 z-30 bg-white border-b border-gray-200 mb-4 -mx-4">
+    <div className="sticky top-0 z-30 bg-white border-b border-gray-200 mb-6 -mx-4 sm:-mx-6 lg:-mx-8">
       <div className="overflow-x-auto scrollbar-hide">
-        <div className="flex gap-1 p-3 min-w-max px-4">
+        <div className="flex gap-1 p-3 min-w-max px-4 sm:px-6 lg:px-8">
           {allCategories.map((category) => (
             <button
               key={category.id}

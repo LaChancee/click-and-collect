@@ -1,8 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, ArrowLeft, Receipt } from "lucide-react";
+import { CheckCircle, ArrowLeft, Receipt, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
+import { prisma } from "@/lib/prisma";
+import { StripeService } from "@/lib/stripe";
+import { redirect } from "next/navigation";
 
 interface SuccessPageProps {
   params: Promise<{
@@ -13,9 +16,47 @@ interface SuccessPageProps {
   }>;
 }
 
+async function getOrderFromStripeSession(sessionId: string) {
+  try {
+    const stripeService = StripeService.getInstance();
+    const session = await stripeService.retrieveCheckoutSession(sessionId);
+
+    if (session.metadata?.timeSlotId) {
+      // Rechercher la commande créée par le webhook
+      const order = await prisma.order.findFirst({
+        where: {
+          stripeSessionId: sessionId,
+          timeSlotId: session.metadata.timeSlotId,
+        },
+        select: {
+          orderNumber: true,
+        },
+      });
+
+      return order;
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Erreur lors de la récupération de la commande:", error);
+    return null;
+  }
+}
+
 export default async function SuccessPage({ params, searchParams }: SuccessPageProps) {
   const { bakerySlug } = await params;
   const { session_id } = await searchParams;
+
+  let orderNumber: string | null = null;
+
+  // Si on a un session_id, essayer de récupérer la commande
+  if (session_id) {
+    const order = await getOrderFromStripeSession(session_id);
+    if (order?.orderNumber) {
+      // Rediriger vers la page de confirmation avec le numéro de commande
+      redirect(`/shop/order-confirmation?orderNumber=${order.orderNumber}`);
+    }
+  }
 
   return (
     <div className="container mx-auto py-8">
@@ -40,9 +81,12 @@ export default async function SuccessPage({ params, searchParams }: SuccessPageP
             </div>
 
             {session_id && (
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <p className="text-sm text-blue-800 mb-2">
                   <strong>ID de session :</strong> {session_id}
+                </p>
+                <p className="text-xs text-blue-600">
+                  Les détails de votre commande sont en cours de traitement...
                 </p>
               </div>
             )}
@@ -52,7 +96,7 @@ export default async function SuccessPage({ params, searchParams }: SuccessPageP
               <ul className="text-left space-y-2 text-gray-600">
                 <li className="flex items-start gap-2">
                   <Receipt className="h-4 w-4 mt-1 text-blue-500" />
-                  <span>Vous recevrez un email de confirmation</span>
+                  <span>Vous recevrez un email de confirmation dans quelques minutes</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-4 w-4 mt-1 text-green-500" />
@@ -72,6 +116,23 @@ export default async function SuccessPage({ params, searchParams }: SuccessPageP
                   Retour à la boutique
                 </Link>
               </Button>
+
+              {session_id && (
+                <Button asChild>
+                  <Link href="/shop/order-confirmation" className="flex items-center gap-2">
+                    <ExternalLink className="h-4 w-4" />
+                    Voir mes commandes
+                  </Link>
+                </Button>
+              )}
+            </div>
+
+            {/* Note explicative */}
+            <div className="bg-gray-50 p-4 rounded-lg text-sm text-gray-600">
+              <p>
+                💡 <strong>Bon à savoir :</strong> Si vous ne recevez pas d'email de confirmation dans les 10 minutes,
+                vérifiez vos spams ou contactez directement la boulangerie.
+              </p>
             </div>
           </CardContent>
         </Card>

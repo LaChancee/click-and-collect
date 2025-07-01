@@ -188,7 +188,7 @@ export function ArticleGrid({ articles, categories, bakery, mealDeals = [] }: Ar
     <div className="space-y-8">
       {/* Section Formules */}
       {mealDeals.length > 0 && (
-        <div className="space-y-6">
+        <div id="formules" className="space-y-6 scroll-mt-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Nos Formules</h2>
             <p className="text-gray-600">Économisez avec nos offres combinées</p>
@@ -221,26 +221,29 @@ export function ArticleGrid({ articles, categories, bakery, mealDeals = [] }: Ar
           <div key={category.id} id={category.slug} className="scroll-mt-4">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">{category.name}</h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
               {categoryArticles.map((article) => {
                 const quantity = getItemQuantity(article.id);
+                const isOutOfStock = !article.isAvailable || (article.stockCount !== undefined && article.stockCount !== null && article.stockCount <= 0);
 
                 return (
                   <div
                     key={article.id}
-                    className="group bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md hover:border-gray-300 transition-all cursor-pointer"
-                    onClick={() => openProductModal(article)}
+                    className={`group bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md hover:border-gray-300 transition-all cursor-pointer ${isOutOfStock ? 'opacity-75 grayscale' : ''
+                      }`}
+                    onClick={() => !isOutOfStock && openProductModal(article)}
                   >
                     <div className="relative">
                       {/* Image */}
-                      <div className="aspect-[4/3] bg-gray-100 overflow-hidden">
+                      <div className="aspect-[3/2] bg-gray-100 overflow-hidden">
                         {article.imageUrl || article.image ? (
                           <Image
                             src={article.imageUrl || article.image || ''}
                             alt={article.name}
                             width={400}
                             height={300}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${isOutOfStock ? 'filter grayscale' : ''
+                              }`}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-6xl">
@@ -250,14 +253,27 @@ export function ArticleGrid({ articles, categories, bakery, mealDeals = [] }: Ar
                       </div>
 
                       {/* Stock badge */}
-                      {!article.isAvailable && (
+                      {isOutOfStock && (
+                        <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+                          <div className="bg-white px-4 py-2 rounded-lg shadow-lg text-center">
+                            <div className="text-lg font-bold text-gray-900 mb-1">😔</div>
+                            <div className="text-sm font-medium text-gray-900">Victime de son succès</div>
+                            <div className="text-xs text-gray-600">Produit épuisé</div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Low stock warning */}
+                      {!isOutOfStock && article.stockCount && article.stockCount <= 3 && (
                         <div className="absolute top-2 left-2">
-                          <Badge variant="destructive">Épuisé</Badge>
+                          <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-300">
+                            Plus que {article.stockCount} !
+                          </Badge>
                         </div>
                       )}
 
                       {/* Add to cart button */}
-                      {article.isAvailable && (
+                      {!isOutOfStock && (
                         <div className="absolute bottom-2 right-2">
                           {quantity === 0 ? (
                             <Button
@@ -304,24 +320,27 @@ export function ArticleGrid({ articles, categories, bakery, mealDeals = [] }: Ar
                     </div>
 
                     {/* Content */}
-                    <div className="p-4">
-                      <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">
+                    <div className="p-5 sm:p-6">
+                      <h3 className={`font-semibold mb-2 line-clamp-2 text-base sm:text-lg ${isOutOfStock ? 'text-gray-500' : 'text-gray-900'
+                        }`}>
                         {article.name}
                       </h3>
 
                       {article.description && (
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                        <p className={`text-sm mb-4 line-clamp-2 ${isOutOfStock ? 'text-gray-400' : 'text-gray-600'
+                          }`}>
                           {article.description}
                         </p>
                       )}
 
                       <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-gray-900">
+                        <span className={`text-lg font-bold ${isOutOfStock ? 'text-gray-500' : 'text-gray-900'
+                          }`}>
                           {parseFloat(article.price).toFixed(2)}€
                         </span>
 
                         <div className="flex flex-wrap items-center gap-2">
-                          {article.mealDealItems && article.mealDealItems.length > 0 && (
+                          {article.mealDealItems && article.mealDealItems.length > 0 && !isOutOfStock && (
                             <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
                               ✨ Formule dispo
                             </Badge>
@@ -329,11 +348,6 @@ export function ArticleGrid({ articles, categories, bakery, mealDeals = [] }: Ar
                           {article.allergens && article.allergens.length > 0 && (
                             <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
                               🚨 Allergènes
-                            </Badge>
-                          )}
-                          {article.stockCount && article.stockCount <= 5 && (
-                            <Badge variant="outline" className="text-xs">
-                              Plus que {article.stockCount}
                             </Badge>
                           )}
                         </div>

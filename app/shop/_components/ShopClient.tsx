@@ -98,7 +98,7 @@ export function ShopClient({ bakery, categories, articles, mealDeals = [] }: Sho
           <div className="flex-1 min-w-0">
             {/* Category Tabs - Mobile only */}
             <div className="lg:hidden">
-              <CategoryTabs categories={categories} />
+              <CategoryTabs categories={categories} hasMealDeals={mealDeals.length > 0} />
             </div>
 
             {/* Articles Grid */}
