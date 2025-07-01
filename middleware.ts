@@ -15,7 +15,6 @@ export const config = {
      */
     "/((?!api|_next/static|_next/image|favicon.ico|admin).*)",
   ],
-  runtime: "nodejs",
 };
 
 export async function middleware(request: NextRequest) {
