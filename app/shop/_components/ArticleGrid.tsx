@@ -5,12 +5,24 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { useCart } from "../../../src/stores/cart-context";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
+import { ProductDetailModal } from "./ProductDetailModal";
 
 interface Category {
   id: string;
   name: string;
   slug: string;
+}
+
+interface Allergen {
+  id: string;
+  name: string;
+  description?: string | null;
+}
+
+interface ProductAllergen {
+  allergenId: string;
+  allergen: Allergen;
 }
 
 interface Article {
@@ -26,6 +38,7 @@ interface Article {
   stockCount?: number | null;
   position: number;
   categoryId: string;
+  allergens?: ProductAllergen[];
   category: {
     id: string;
     name: string;
@@ -53,6 +66,8 @@ interface ArticleGridProps {
 
 export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) {
   const { addItem, updateQuantity, getItemQuantity, setBakery } = useCart();
+  const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Définir la boulangerie actuelle au chargement
   useEffect(() => {
@@ -60,6 +75,16 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
       setBakery(bakery.id, bakery.name, bakery.slug);
     }
   }, [bakery?.id, bakery?.name, bakery?.slug, setBakery]);
+
+  const openProductModal = (article: Article) => {
+    setSelectedArticle(article);
+    setIsModalOpen(true);
+  };
+
+  const closeProductModal = () => {
+    setIsModalOpen(false);
+    setSelectedArticle(null);
+  };
 
   const handleAddToCart = useCallback((article: Article) => {
     if (!bakery?.id || !bakery?.name || !bakery?.slug) {
@@ -117,7 +142,8 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
                 return (
                   <div
                     key={article.id}
-                    className="group bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                    className="group bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md hover:border-gray-300 transition-all cursor-pointer"
+                    onClick={() => openProductModal(article)}
                   >
                     <div className="relative">
                       {/* Image */}
@@ -150,7 +176,10 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
                           {quantity === 0 ? (
                             <Button
                               size="sm"
-                              onClick={() => handleAddToCart(article)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openProductModal(article);
+                              }}
                               className="bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 rounded-full h-8 w-8 p-0 shadow-lg"
                             >
                               <Plus className="h-3 w-3" />
@@ -160,7 +189,10 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => handleUpdateQuantity(article.id, -1)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openProductModal(article);
+                                }}
                                 className="h-6 w-6 p-0 rounded-full hover:bg-gray-100"
                               >
                                 <Minus className="h-2 w-2" />
@@ -171,7 +203,10 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => handleUpdateQuantity(article.id, 1)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openProductModal(article);
+                                }}
                                 className="h-6 w-6 p-0 rounded-full hover:bg-gray-100"
                               >
                                 <Plus className="h-2 w-2" />
@@ -199,11 +234,18 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
                           {parseFloat(article.price).toFixed(2)}€
                         </span>
 
-                        {article.stockCount && article.stockCount <= 5 && (
-                          <Badge variant="outline" className="text-xs">
-                            Plus que {article.stockCount}
-                          </Badge>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {article.allergens && article.allergens.length > 0 && (
+                            <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                              🚨 Allergènes
+                            </Badge>
+                          )}
+                          {article.stockCount && article.stockCount <= 5 && (
+                            <Badge variant="outline" className="text-xs">
+                              Plus que {article.stockCount}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -213,6 +255,14 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
           </div>
         );
       })}
+
+      {/* Product Detail Modal */}
+      <ProductDetailModal
+        article={selectedArticle}
+        isOpen={isModalOpen}
+        onClose={closeProductModal}
+        bakery={bakery}
+      />
     </div>
   );
 } 

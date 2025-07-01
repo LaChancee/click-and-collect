@@ -10,7 +10,6 @@ import Image from "next/image";
 import { useCart, type CartItem } from "../../../src/stores/cart-context";
 
 const deliveryFee: number = 0; // Gratuit pour le click & collect
-const minimumOrder = 10;
 
 export function CartSidebar() {
   const router = useRouter();
@@ -29,7 +28,7 @@ export function CartSidebar() {
   const subtotal = getTotalPrice();
   const total = subtotal + deliveryFee;
   const itemCount = getTotalItems();
-  const canCheckout = total >= minimumOrder;
+  const canCheckout = cartItems.length > 0 && bakerySlug;
 
   const handleUpdateQuantity = useCallback((id: string, newQuantity: number) => {
     if (newQuantity <= 0) {
@@ -153,18 +152,6 @@ export function CartSidebar() {
             </div>
           </div>
 
-          {/* Minimum Order Warning */}
-          {!canCheckout && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5 lg:p-3">
-              <p className="text-sm text-amber-800 m-4">
-                Commande minimum de {minimumOrder}€
-              </p>
-              <p className="text-xs text-amber-600">
-                Il vous manque {(minimumOrder - total).toFixed(2)}€
-              </p>
-            </div>
-          )}
-
           {/* Checkout Button */}
           <div className="pb-4 my-4 lg:pb-0">
             <Button
@@ -172,11 +159,7 @@ export function CartSidebar() {
               disabled={!canCheckout}
               onClick={handleCheckout}
             >
-              {canCheckout ? (
-                `Commander • ${total.toFixed(2)}€`
-              ) : (
-                `Minimum ${minimumOrder}€`
-              )}
+              Commander • {total.toFixed(2)}€
             </Button>
           </div>
         </div>

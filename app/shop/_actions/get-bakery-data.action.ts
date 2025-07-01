@@ -66,6 +66,17 @@ export async function getBakeryDataAction(bakerySlug: string) {
             slug: true,
           },
         },
+        allergens: {
+          include: {
+            allergen: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+              },
+            },
+          },
+        },
       },
       orderBy: [
         {

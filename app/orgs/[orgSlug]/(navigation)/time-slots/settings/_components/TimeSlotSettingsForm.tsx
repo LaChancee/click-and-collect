@@ -24,7 +24,6 @@ interface TimeSlotSettingsFormProps {
     timeSlotDuration: number;
     maxOrdersPerSlot: number;
     preOrderDaysAhead: number;
-    minOrderValue?: number | null;
   };
 }
 
@@ -39,7 +38,6 @@ export function TimeSlotSettingsForm({ orgSlug, settings }: TimeSlotSettingsForm
       timeSlotDuration: settings.timeSlotDuration,
       maxOrdersPerSlot: settings.maxOrdersPerSlot,
       preOrderDaysAhead: settings.preOrderDaysAhead,
-      minOrderValue: settings.minOrderValue ? Number(settings.minOrderValue) : undefined,
     }
   });
 
@@ -181,32 +179,6 @@ export function TimeSlotSettingsForm({ orgSlug, settings }: TimeSlotSettingsForm
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Paramètres de commande</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <FormField
-            control={form.control}
-            name="minOrderValue"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Montant minimum de commande (€)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="Optionnel"
-                    {...field}
-                    value={field.value || ""}
-                    onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </CardContent>
         <CardFooter>
           <SubmitButton
             type="submit"

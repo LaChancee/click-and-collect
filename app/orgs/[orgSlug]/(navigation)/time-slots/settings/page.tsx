@@ -55,10 +55,7 @@ export default async function TimeSlotSettingsPage(props: PageParams<{ orgSlug: 
         <div className="max-w-2xl mx-auto">
           <TimeSlotSettingsForm
             orgSlug={orgSlug}
-            settings={{
-              ...settings,
-              minOrderValue: settings.minOrderValue ? Number(settings.minOrderValue) : null,
-            }}
+            settings={settings}
           />
         </div>
       </LayoutContent>

@@ -40,7 +40,7 @@ Vérifiez qu'au moins une boulangerie a configuré Stripe Connect :
 ### Test 2 : Commande avec Paiement en Ligne
 
 1. **Accédez à la boutique** : `/shop?bakery=[bakerySlug]`
-2. **Ajoutez des articles au panier** (minimum 1€)
+2. **Ajoutez des articles au panier**
 3. **Cliquez sur "Commander"**
 4. **Remplissez le formulaire de checkout** :
    - Nom complet
