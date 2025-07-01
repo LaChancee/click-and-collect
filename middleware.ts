@@ -1,5 +1,3 @@
-import { auth } from "@/lib/auth";
-import { SiteConfig } from "@/site-config";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -18,17 +16,9 @@ export const config = {
 };
 
 export async function middleware(request: NextRequest) {
-  const session = await auth.api.getSession({
-    headers: request.headers,
-  });
-
-  if (
-    SiteConfig.features.enableLandingRedirection &&
-    session &&
-    request.nextUrl.pathname === "/"
-  ) {
-    return NextResponse.redirect(new URL("/orgs", request.url));
-  }
-
+  // ✅ Middleware simplifié - pas d'authentification pour éviter l'erreur better-auth
+  // TODO: Réactiver la logique d'authentification quand better-auth sera compatible Edge Runtime
+  
+  // Pour l'instant, on laisse passer toutes les requêtes
   return NextResponse.next();
 }
