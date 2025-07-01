@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    optimizePackageImports: ["@radix-ui/react-icons"],
-    serverComponentsExternalPackages: ["stripe"],
+    optimizePackageImports: ['@radix-ui/react-icons'],
+    serverComponentsExternalPackages: ['stripe'],
   },
   typescript: {
     ignoreBuildErrors: false,
@@ -13,8 +13,8 @@ const nextConfig = {
   webpack: (config, { isServer }) => {
     if (isServer) {
       config.externals.push({
-        "better-auth": "commonjs better-auth",
-        "@stripe/stripe-js": "commonjs @stripe/stripe-js",
+        'better-auth': 'commonjs better-auth',
+        '@stripe/stripe-js': 'commonjs @stripe/stripe-js',
       });
     }
     return config;
@@ -22,8 +22,8 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
   images: {
-    domains: ["localhost"],
-    formats: ["image/webp", "image/avif"],
+    domains: ['localhost'],
+    formats: ['image/webp', 'image/avif'],
   },
 };
 
