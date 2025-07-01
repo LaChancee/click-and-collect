@@ -23,7 +23,20 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
   images: {
-    domains: ["localhost"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "localhost",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "utfs.io",
+      },
+    ],
     formats: ["image/webp", "image/avif"],
   },
 };
