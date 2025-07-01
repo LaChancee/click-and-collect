@@ -17,6 +17,9 @@ import { Footer } from "@/features/layout/footer";
 import { Pricing } from "@/features/plans/pricing-section";
 import Image from "next/image";
 
+// Forcer le rendu dynamique pour éviter les erreurs avec les hooks better-auth
+export const dynamic = 'force-dynamic';
+
 export default function LandingPage() {
   return (
     <div className="bg-background text-foreground relative flex h-fit flex-col">
