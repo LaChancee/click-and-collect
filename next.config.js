@@ -1,25 +1,29 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    authInterrupts: true,
-    nodeMiddleware: true,
+    optimizePackageImports: ["@radix-ui/react-icons"],
+    serverComponentsExternalPackages: ["stripe"],
+  },
+  typescript: {
+    ignoreBuildErrors: false,
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals.push({
+        "better-auth": "commonjs better-auth",
+        "@stripe/stripe-js": "commonjs @stripe/stripe-js",
+      });
+    }
+    return config;
+  },
+  poweredByHeader: false,
+  compress: true,
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "utfs.io",
-        port: "",
-      },
-      {
-        protocol: "https",
-        hostname: "images.unsplash.com",
-        port: "",
-      },
-    ],
+    domains: ["localhost"],
+    formats: ["image/webp", "image/avif"],
   },
 };
 
