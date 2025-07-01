@@ -16,6 +16,23 @@ interface Category {
   isActive: boolean;
 }
 
+interface MealDealItem {
+  id: string;
+  quantity: number;
+  required: boolean;
+  groupName?: string | null;
+  mealDeal: {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string | null;
+    price: string;
+    image?: string | null;
+    imageUrl?: string | null;
+    isActive: boolean;
+  };
+}
+
 interface Article {
   id: string;
   name: string;
@@ -29,6 +46,7 @@ interface Article {
   stockCount?: number | null;
   position: number;
   categoryId: string;
+  mealDealItems?: MealDealItem[];
   category: {
     id: string;
     name: string;
@@ -52,9 +70,10 @@ interface ShopClientProps {
   bakery: Bakery;
   categories: Category[];
   articles: Article[];
+  mealDeals?: any[];
 }
 
-export function ShopClient({ bakery, categories, articles }: ShopClientProps) {
+export function ShopClient({ bakery, categories, articles, mealDeals = [] }: ShopClientProps) {
   return (
     <div className="min-h-screen bg-white">
       {/* Header simplifié avec juste l'image */}
@@ -87,6 +106,7 @@ export function ShopClient({ bakery, categories, articles }: ShopClientProps) {
               articles={articles}
               categories={categories}
               bakery={bakery}
+              mealDeals={mealDeals}
             />
           </div>
 

@@ -27,7 +27,8 @@ model Category {
   bakery   Organization @relation(fields: [bakeryId], references: [id], onDelete: Cascade)
 
   // Relations
-  articles Article[]
+  articles      Article[]
+  mealDealItems MealDealItem[] // Relation avec les formules
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -128,14 +129,18 @@ model MealDealItem {
   mealDealId String
   mealDeal   MealDeal @relation(fields: [mealDealId], references: [id], onDelete: Cascade)
 
-  // Relation avec le produit
-  articleId String
-  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  // Relation avec le produit (optionnel)
+  articleId String?
+  article   Article? @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  // Relation avec la catégorie (optionnel)
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([mealDealId, articleId, groupName])
+  @@unique([mealDealId, articleId, categoryId, groupName])
 }
 
 model Allergen {

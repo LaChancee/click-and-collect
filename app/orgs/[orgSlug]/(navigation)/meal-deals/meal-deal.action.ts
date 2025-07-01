@@ -44,10 +44,11 @@ export const createMealDealAction = action
         slug: slug,
         items: {
           create: items.map((item) => ({
-            articleId: item.articleId,
+            articleId: item.articleId || null,
+            categoryId: item.categoryId || null,
             quantity: item.quantity,
             required: item.required,
-            groupName: null,
+            groupName: item.groupName || null,
           })),
         },
       },
@@ -55,6 +56,7 @@ export const createMealDealAction = action
         items: {
           include: {
             article: true,
+            category: true,
           },
         },
       },
@@ -84,10 +86,11 @@ export const updateMealDealAction = action
         ...mealDealData,
         items: {
           create: items.map((item) => ({
-            articleId: item.articleId,
+            articleId: item.articleId || null,
+            categoryId: item.categoryId || null,
             quantity: item.quantity,
             required: item.required,
-            groupName: null,
+            groupName: item.groupName || null,
           })),
         },
       },
@@ -95,6 +98,7 @@ export const updateMealDealAction = action
         items: {
           include: {
             article: true,
+            category: true,
           },
         },
       },

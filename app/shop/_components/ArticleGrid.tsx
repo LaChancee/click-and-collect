@@ -7,6 +7,8 @@ import Image from "next/image";
 import { useCart } from "../../../src/stores/cart-context";
 import { useEffect, useCallback, useState } from "react";
 import { ProductDetailModal } from "./ProductDetailModal";
+import { MealDealStepModal } from "./MealDealStepModal";
+import { MealDealCard } from "./MealDealCard";
 
 interface Category {
   id: string;
@@ -25,6 +27,23 @@ interface ProductAllergen {
   allergen: Allergen;
 }
 
+interface MealDealItem {
+  id: string;
+  quantity: number;
+  required: boolean;
+  groupName?: string | null;
+  mealDeal: {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string | null;
+    price: string;
+    image?: string | null;
+    imageUrl?: string | null;
+    isActive: boolean;
+  };
+}
+
 interface Article {
   id: string;
   name: string;
@@ -39,6 +58,7 @@ interface Article {
   position: number;
   categoryId: string;
   allergens?: ProductAllergen[];
+  mealDealItems?: MealDealItem[];
   category: {
     id: string;
     name: string;
@@ -58,16 +78,48 @@ interface Bakery {
   logo?: string | null;
 }
 
+interface MealDealItemFull {
+  id: string;
+  quantity: number;
+  required: boolean;
+  groupName?: string | null;
+  article: {
+    id: string;
+    name: string;
+    slug: string;
+    price: string;
+    image?: string | null;
+    imageUrl?: string | null;
+    isActive: boolean;
+    isAvailable: boolean;
+  };
+}
+
+interface MealDealFull {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  price: string;
+  image?: string | null;
+  imageUrl?: string | null;
+  isActive: boolean;
+  items: MealDealItemFull[];
+}
+
 interface ArticleGridProps {
   articles: Article[];
   categories: Category[];
   bakery: Bakery;
+  mealDeals?: MealDealFull[];
 }
 
-export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) {
+export function ArticleGrid({ articles, categories, bakery, mealDeals = [] }: ArticleGridProps) {
   const { addItem, updateQuantity, getItemQuantity, setBakery } = useCart();
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMealDealModalOpen, setIsMealDealModalOpen] = useState(false);
+  const [selectedMealDeal, setSelectedMealDeal] = useState<MealDealFull | null>(null);
 
   // Définir la boulangerie actuelle au chargement
   useEffect(() => {
@@ -84,6 +136,16 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
   const closeProductModal = () => {
     setIsModalOpen(false);
     setSelectedArticle(null);
+  };
+
+  const openMealDealModal = (mealDeal: MealDealFull) => {
+    setSelectedMealDeal(mealDeal);
+    setIsMealDealModalOpen(true);
+  };
+
+  const closeMealDealModal = () => {
+    setIsMealDealModalOpen(false);
+    setSelectedMealDeal(null);
   };
 
   const handleAddToCart = useCallback((article: Article) => {
@@ -124,6 +186,30 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
 
   return (
     <div className="space-y-8">
+      {/* Section Formules */}
+      {mealDeals.length > 0 && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Nos Formules</h2>
+            <p className="text-gray-600">Économisez avec nos offres combinées</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {mealDeals.map((mealDeal) => (
+              <div className="sm:col-span-2" key={mealDeal.id}>
+                <MealDealCard
+                  mealDeal={mealDeal}
+                  onSelect={openMealDealModal}
+                  categories={categories}
+                  articles={articles}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Section Articles par catégorie */}
       {categories.map((category) => {
         const categoryArticles = articlesByCategory[category.id] || [];
 
@@ -234,7 +320,12 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
                           {parseFloat(article.price).toFixed(2)}€
                         </span>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {article.mealDealItems && article.mealDealItems.length > 0 && (
+                            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                              ✨ Formule dispo
+                            </Badge>
+                          )}
                           {article.allergens && article.allergens.length > 0 && (
                             <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
                               🚨 Allergènes
@@ -262,6 +353,20 @@ export function ArticleGrid({ articles, categories, bakery }: ArticleGridProps) 
         isOpen={isModalOpen}
         onClose={closeProductModal}
         bakery={bakery}
+        availableMealDeals={mealDeals}
+        categories={categories}
+        articles={articles}
+      />
+
+      {/* Meal Deal Step Modal */}
+      <MealDealStepModal
+        availableMealDeals={mealDeals}
+        isOpen={isMealDealModalOpen}
+        onClose={closeMealDealModal}
+        bakery={bakery}
+        selectedMealDeal={selectedMealDeal}
+        categories={categories}
+        articles={articles}
       />
     </div>
   );

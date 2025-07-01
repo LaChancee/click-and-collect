@@ -75,13 +75,14 @@ export default async function HomePage(props: PageParams) {
   }
 
   try {
-    const { bakery, categories, articles } = await getBakeryDataAction(bakerySlug);
+    const { bakery, categories, articles, mealDeals } = await getBakeryDataAction(bakerySlug);
 
     return (
       <ShopClient
         bakery={bakery}
         categories={categories}
         articles={articles}
+        mealDeals={mealDeals}
       />
     );
   } catch (error) {
@@ -102,7 +103,7 @@ export default async function HomePage(props: PageParams) {
             </Link>
           </div>
         </div>
-    </div>
-  );
+      </div>
+    );
   }
 }

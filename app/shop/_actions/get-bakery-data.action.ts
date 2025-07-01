@@ -77,6 +77,11 @@ export async function getBakeryDataAction(bakerySlug: string) {
             },
           },
         },
+        mealDealItems: {
+          include: {
+            mealDeal: true,
+          },
+        },
       },
       orderBy: [
         {
@@ -88,10 +93,43 @@ export async function getBakeryDataAction(bakerySlug: string) {
       ],
     });
 
+    // Récupérer toutes les formules actives avec leurs items détaillés
+    const mealDeals = await prisma.mealDeal.findMany({
+      where: {
+        bakeryId: bakery.id,
+        isActive: true,
+      },
+      include: {
+        items: {
+          include: {
+            article: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                price: true,
+                image: true,
+                imageUrl: true,
+                isActive: true,
+                isAvailable: true,
+              },
+            },
+          },
+          orderBy: {
+            groupName: "asc",
+          },
+        },
+      },
+      orderBy: {
+        position: "asc",
+      },
+    });
+
     return serializeData({
       bakery,
       categories,
       articles,
+      mealDeals,
     });
   } catch (error) {
     console.error("Erreur lors de la récupération des données:", error);

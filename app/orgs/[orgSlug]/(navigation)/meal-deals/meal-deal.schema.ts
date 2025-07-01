@@ -22,12 +22,19 @@ export const defaultMealDealValues: Partial<MealDealFormSchemaType> = {
 };
 
 // Schema for meal deal items (ULTRA SIMPLIFIÉ)
-export const MealDealItemSchema = z.object({
-  articleId: z.string(),
-  quantity: z.coerce.number().min(1),
-  required: z.boolean().default(false),
-  groupName: z.string().optional().nullable(),
-});
+export const MealDealItemSchema = z
+  .object({
+    articleId: z.string().optional().nullable(),
+    categoryId: z.string().optional().nullable(),
+    quantity: z.coerce.number().min(1),
+    required: z.boolean().default(false),
+    groupName: z.string().optional().nullable(),
+  })
+  .refine((data) => Boolean(data.articleId) !== Boolean(data.categoryId), {
+    message:
+      "Soit articleId, soit categoryId doit être renseigné, mais pas les deux",
+    path: ["articleId"],
+  });
 
 export type MealDealItemType = z.infer<typeof MealDealItemSchema>;
 

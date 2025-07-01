@@ -38,16 +38,26 @@ type Article = {
   price: number;
   categoryId: string;
   category: {
+    id: string;
     name: string;
   };
 };
 
+type Category = {
+  id: string;
+  name: string;
+};
+
 type MealDealItem = {
   id?: string;
-  articleId: string;
+  articleId?: string | null;
+  categoryId?: string | null;
   article?: {
     name: string;
     price: number;
+  };
+  category?: {
+    name: string;
   };
   quantity: number;
   required: boolean;
@@ -71,6 +81,7 @@ type MealDealFormProps = {
   orgSlug: string;
   mealDeal?: MealDeal;
   articles: Article[];
+  categories: Category[];
 };
 
 // Helper to group articles by category
@@ -90,7 +101,8 @@ export default function MealDealForm({
   orgId,
   orgSlug,
   mealDeal,
-  articles
+  articles,
+  categories
 }: MealDealFormProps) {
   const router = useRouter();
   const articlesByCategory = groupArticlesByCategory(articles);
@@ -139,17 +151,51 @@ export default function MealDealForm({
 
     const newItem: MealDealItem = {
       articleId,
+      categoryId: null,
       article: {
         name: article.name,
         price: article.price,
       },
+      category: undefined,
       quantity: 1,
       required: false,
-      groupName: undefined,
+      groupName: article.category.name,
     };
 
     setMealDealItems([...mealDealItems, newItem]);
     toast.success(`${article.name} ajouté à la formule`);
+  };
+
+  // Handle adding a category to the meal deal
+  const handleAddCategory = (categoryId: string) => {
+    const category = categories.find(c => c.id === categoryId);
+    if (!category) return;
+
+    // Vérifier si la catégorie est déjà dans la formule
+    if (mealDealItems.some(item => item.categoryId === categoryId)) {
+      toast.error("Cette catégorie est déjà dans la formule");
+      return;
+    }
+
+    const categoryArticles = articles.filter(a => a.categoryId === categoryId);
+    const avgPrice = categoryArticles.length > 0
+      ? categoryArticles.reduce((sum, art) => sum + art.price, 0) / categoryArticles.length
+      : 0;
+
+    const newItem: MealDealItem = {
+      articleId: null,
+      categoryId,
+      article: undefined,
+      category: {
+        name: category.name,
+      },
+      quantity: 1,
+      required: false,
+      groupName: category.name,
+    };
+
+    setMealDealItems([...mealDealItems, newItem]);
+    toast.success(`Catégorie "${category.name}" ajoutée à la formule`);
   };
 
   // Handle removing an item from the meal deal
@@ -159,8 +205,13 @@ export default function MealDealForm({
     newItems.splice(index, 1);
     setMealDealItems(newItems);
 
-    const article = articles.find(a => a.id === item.articleId);
-    toast.success(`${article?.name || 'Produit'} retiré de la formule`);
+    if (item.articleId) {
+      const article = articles.find(a => a.id === item.articleId);
+      toast.success(`${article?.name || 'Produit'} retiré de la formule`);
+    } else if (item.categoryId) {
+      const category = categories.find(c => c.id === item.categoryId);
+      toast.success(`Catégorie "${category?.name || 'Catégorie'}" retirée de la formule`);
+    }
   };
 
   // Handle updating item quantity
@@ -178,18 +229,29 @@ export default function MealDealForm({
     setMealDealItems(newItems);
   };
 
+  // Helper function to get item price
+  const getItemPrice = (item: MealDealItem): number => {
+    if (item.articleId) {
+      const article = articles.find(a => a.id === item.articleId);
+      return article ? Number(article.price) : 0;
+    } else if (item.categoryId) {
+      const categoryArticles = articles.filter(a => a.categoryId === item.categoryId);
+      if (categoryArticles.length === 0) return 0;
+      return categoryArticles.reduce((sum, art) => sum + Number(art.price), 0) / categoryArticles.length;
+    }
+    return 0;
+  };
+
   // Calculate total price of all required items
   const totalRequiredItemsPrice = mealDealItems
     .filter(item => item.required)
     .reduce((sum, item) => {
-      const article = articles.find(a => a.id === item.articleId);
-      return sum + (article ? Number(article.price) * item.quantity : 0);
+      return sum + (getItemPrice(item) * item.quantity);
     }, 0);
 
   // Calculate total items price
   const totalItemsPrice = mealDealItems.reduce((sum, item) => {
-    const article = articles.find(a => a.id === item.articleId);
-    return sum + (article ? Number(article.price) * item.quantity : 0);
+    return sum + (getItemPrice(item) * item.quantity);
   }, 0);
 
   // Handle form submission
@@ -199,10 +261,11 @@ export default function MealDealForm({
       const formData = {
         ...values,
         items: mealDealItems.map(item => ({
-          articleId: item.articleId,
+          articleId: item.articleId || null,
+          categoryId: item.categoryId || null,
           quantity: item.quantity,
           required: item.required,
-          groupName: undefined // Pas de groupes
+          groupName: item.groupName || null,
         })),
       };
 
@@ -389,7 +452,7 @@ export default function MealDealForm({
                 Catalogue de produits
               </CardTitle>
               <CardDescription>
-                Cliquez sur les produits pour les ajouter à votre formule
+                Ajoutez des produits individuels ou des catégories complètes à votre formule
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -401,53 +464,89 @@ export default function MealDealForm({
                       <p className="text-muted-foreground">Aucun produit disponible</p>
                     </div>
                   ) : (
-                    Object.entries(articlesByCategory).map(([categoryName, categoryArticles]) => (
-                      <div key={categoryName} className="space-y-2">
-                        <div className="flex items-center gap-2 sticky top-0 bg-background py-1">
-                          <Badge variant="outline" className="font-medium">
-                            {categoryName}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            ({categoryArticles.length})
-                          </span>
-                        </div>
-                        <div className="space-y-1">
-                          {categoryArticles.map((article) => {
-                            const isInMealDeal = mealDealItems.some(item => item.articleId === article.id);
-                            return (
-                              <button
-                                key={article.id}
+                    Object.entries(articlesByCategory).map(([categoryName, categoryArticles]) => {
+                      const category = categories.find(c => c.name === categoryName);
+                      const isCategoryInMealDeal = category && mealDealItems.some(item => item.categoryId === category.id);
+
+                      return (
+                        <div key={categoryName} className="space-y-2">
+                          <div className="flex items-center justify-between sticky top-0 bg-background py-1">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="font-medium">
+                                {categoryName}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                ({categoryArticles.length} produits)
+                              </span>
+                            </div>
+
+                            {/* Bouton pour ajouter toute la catégorie */}
+                            {category && (
+                              <Button
                                 type="button"
-                                onClick={() => handleAddItem(article.id)}
-                                disabled={isInMealDeal}
-                                className={cn(
-                                  "w-full text-left p-3 border rounded-md transition-all",
-                                  isInMealDeal
-                                    ? "bg-muted border-muted-foreground/20 cursor-not-allowed opacity-50"
-                                    : "hover:bg-accent hover:border-accent-foreground/20 cursor-pointer"
-                                )}
+                                size="sm"
+                                variant={isCategoryInMealDeal ? "secondary" : "outline"}
+                                onClick={() => !isCategoryInMealDeal && handleAddCategory(category.id)}
+                                disabled={isCategoryInMealDeal}
+                                className="text-xs h-7"
                               >
-                                <div className="flex justify-between items-center">
-                                  <div>
-                                    <p className="font-medium text-sm">{article.name}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {Number(article.price).toFixed(2)}€
-                                    </p>
-                                  </div>
-                                  {isInMealDeal ? (
-                                    <Badge variant="secondary" className="text-xs">
-                                      Ajouté
-                                    </Badge>
-                                  ) : (
-                                    <Plus className="h-4 w-4 text-muted-foreground" />
+                                {isCategoryInMealDeal ? (
+                                  <>
+                                    <Badge className="mr-1 h-3 w-3 p-0" />
+                                    Catégorie ajoutée
+                                  </>
+                                ) : (
+                                  <>
+                                    <Plus className="mr-1 h-3 w-3" />
+                                    Ajouter toute la catégorie
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                          </div>
+
+                          <div className="space-y-1">
+                            {categoryArticles.map((article) => {
+                              const isInMealDeal = mealDealItems.some(item => item.articleId === article.id);
+                              return (
+                                <button
+                                  key={article.id}
+                                  type="button"
+                                  onClick={() => handleAddItem(article.id)}
+                                  disabled={isInMealDeal || isCategoryInMealDeal}
+                                  className={cn(
+                                    "w-full text-left p-3 border rounded-md transition-all",
+                                    isInMealDeal || isCategoryInMealDeal
+                                      ? "bg-muted border-muted-foreground/20 cursor-not-allowed opacity-50"
+                                      : "hover:bg-accent hover:border-accent-foreground/20 cursor-pointer"
                                   )}
-                                </div>
-                              </button>
-                            );
-                          })}
+                                >
+                                  <div className="flex justify-between items-center">
+                                    <div>
+                                      <p className="font-medium text-sm">{article.name}</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {Number(article.price).toFixed(2)}€
+                                      </p>
+                                    </div>
+                                    {isInMealDeal ? (
+                                      <Badge variant="secondary" className="text-xs">
+                                        Ajouté
+                                      </Badge>
+                                    ) : isCategoryInMealDeal ? (
+                                      <Badge variant="outline" className="text-xs">
+                                        Via catégorie
+                                      </Badge>
+                                    ) : (
+                                      <Plus className="h-4 w-4 text-muted-foreground" />
+                                    )}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </ScrollArea>
@@ -480,22 +579,44 @@ export default function MealDealForm({
                 ) : (
                   <div className="space-y-3">
                     {mealDealItems.map((item, index) => {
-                      const article = articles.find(a => a.id === item.articleId);
-                      const itemTotal = article ? Number(article.price) * item.quantity : 0;
+                      const article = item.articleId ? articles.find(a => a.id === item.articleId) : null;
+                      const category = item.categoryId ? categories.find(c => c.id === item.categoryId) : null;
+                      const itemPrice = getItemPrice(item);
+                      const itemTotal = itemPrice * item.quantity;
 
                       return (
                         <div
-                          key={`${item.articleId}-${index}`}
+                          key={`${item.articleId || item.categoryId}-${index}`}
                           className="border rounded-md p-3 bg-card space-y-3"
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <p className="font-medium text-sm">
-                                {article?.name || "Produit inconnu"}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {article?.price ? `${Number(article.price).toFixed(2)}€ / unité` : "Prix inconnu"}
-                              </p>
+                              {article ? (
+                                <>
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-medium text-sm">{article.name}</p>
+                                    <Badge variant="outline" className="text-xs">Produit</Badge>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">
+                                    {Number(article.price).toFixed(2)}€ / unité
+                                  </p>
+                                </>
+                              ) : category ? (
+                                <>
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-medium text-sm">Catégorie: {category.name}</p>
+                                    <Badge variant="secondary" className="text-xs">Catégorie complète</Badge>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">
+                                    Prix moyen: {itemPrice.toFixed(2)}€ / unité
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Choix parmi {articles.filter(a => a.categoryId === category.id).length} produits
+                                  </p>
+                                </>
+                              ) : (
+                                <p className="font-medium text-sm text-destructive">Élément inconnu</p>
+                              )}
                             </div>
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary" className="text-xs">

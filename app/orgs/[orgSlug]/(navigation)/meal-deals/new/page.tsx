@@ -47,6 +47,7 @@ export default async function NewMealDealPage(props: PageParams<{ orgSlug: strin
       categoryId: true,
       category: {
         select: {
+          id: true,
           name: true
         }
       }
@@ -61,8 +62,24 @@ export default async function NewMealDealPage(props: PageParams<{ orgSlug: strin
     ]
   });
 
-  // Serialize the articles data
+  // Fetch all active categories for this bakery
+  const categories = await prisma.category.findMany({
+    where: {
+      bakeryId: organization.id,
+      isActive: true
+    },
+    select: {
+      id: true,
+      name: true
+    },
+    orderBy: {
+      position: 'asc'
+    }
+  });
+
+  // Serialize the data
   const serializedArticles = serializeData(articles);
+  const serializedCategories = serializeData(categories);
 
   return (
     <Layout>
@@ -86,6 +103,7 @@ export default async function NewMealDealPage(props: PageParams<{ orgSlug: strin
             orgId={organization.id}
             orgSlug={orgSlug}
             articles={serializedArticles}
+            categories={serializedCategories}
           />
         </div>
       </LayoutContent>
