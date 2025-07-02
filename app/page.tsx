@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import type { PageParams } from "@/types/next";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ChefHat } from "lucide-react";
+import { ChefHat, Store, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export default async function HomePage(props: PageParams) {
@@ -18,90 +18,102 @@ export default async function HomePage(props: PageParams) {
     redirect(`/orgs/${bakeryUser.bakery.slug}`);
   }
 
-  // Essayer de récupérer un slug de boulangerie depuis les query params
-  const searchParams = await props.searchParams;
-  let bakerySlug = searchParams?.bakery as string;
+  // Récupérer LA boulangerie unique (il ne peut y en avoir qu'une)
+  const bakery = await prisma.organization.findFirst({
+    where: {
+      isBakery: true,
+    },
+    select: {
+      slug: true,
+      name: true,
+      description: true,
+      address: true,
+    },
+  });
 
-  // Si aucun slug fourni, prendre la première boulangerie disponible
-  if (!bakerySlug) {
-    const firstBakery = await prisma.organization.findFirst({
-      where: {
-        isBakery: true,
-      },
-      select: {
-        slug: true,
-      },
-    });
-
-    if (!firstBakery?.slug) {
-      return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center max-w-md">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">
-              Aucune boulangerie disponible
+  if (!bakery?.slug) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-100 flex items-center justify-center p-4">
+        <div className="text-center max-w-lg bg-white rounded-2xl shadow-xl p-8">
+          <div className="mb-6">
+            <div className="mx-auto w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+              <Store className="w-10 h-10 text-orange-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Bientôt disponible !
             </h1>
             <p className="text-gray-600 mb-6">
-              Aucune boulangerie n'est encore inscrite sur notre plateforme.
+              Notre service Click & Collect sera bientôt en ligne.
+              En attendant, vous pouvez créer votre compte boulangerie.
             </p>
-            <div className="space-y-3">
-              <p className="text-sm text-gray-500">
-                Vous souhaitez vous connecter ou vous inscrire ?
+          </div>
+
+          <div className="space-y-4">
+            <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+              <h3 className="font-semibold text-amber-800 mb-2">🥖 Vous êtes boulanger ?</h3>
+              <p className="text-sm text-amber-700 mb-3">
+                Rejoignez notre plateforme et proposez vos délicieux produits en Click & Collect !
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link href="/auth">
-                  <Button variant="outline" className="flex items-center gap-2">
-                    Se connecter / S'inscrire
-                  </Button>
-                </Link>
-                <Link href="/auth/bakery">
-                  <Button className="flex items-center gap-2">
-                    <ChefHat className="h-4 w-4" />
-                    Créer un compte boulangerie
-                  </Button>
-                </Link>
-                <Link href="/setup-demo">
-                  <Button variant="secondary" className="flex items-center gap-2">
-                    Créer une démo
-                  </Button>
-                </Link>
-              </div>
+              <Link href="/auth/bakery">
+                <Button className="w-full bg-orange-600 hover:bg-orange-700">
+                  <ChefHat className="w-4 h-4 mr-2" />
+                  Créer mon compte boulangerie
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
+
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h3 className="font-semibold text-blue-800 mb-2">👤 Vous êtes client ?</h3>
+              <p className="text-sm text-blue-700 mb-3">
+                Créez votre compte dès maintenant pour être prêt dès l'ouverture !
+              </p>
+              <Link href="/auth/signup">
+                <Button variant="outline" className="w-full border-blue-300 text-blue-700 hover:bg-blue-100">
+                  Créer mon compte client
+                </Button>
+              </Link>
             </div>
           </div>
-        </div>
-      );
-    }
 
-    bakerySlug = firstBakery.slug;
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <p className="text-xs text-gray-500">
+              Vous avez déjà un compte ?
+              <Link href="/auth/signin" className="text-blue-600 hover:underline ml-1">
+                Connectez-vous
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
+  // Charger les données de LA boulangerie
   try {
-    const { bakery, categories, articles, mealDeals } = await getBakeryDataAction(bakerySlug);
+    const { bakery: bakeryData, categories, articles } = await getBakeryDataAction(bakery.slug);
 
     return (
       <ShopClient
-        bakery={bakery}
+        bakery={bakeryData}
         categories={categories}
         articles={articles}
-        mealDeals={mealDeals}
       />
     );
   } catch (error) {
+    console.error("Erreur lors du chargement de la boulangerie:", error);
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="text-center max-w-md bg-white rounded-lg shadow-lg p-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            Erreur de chargement
+            Service temporairement indisponible
           </h1>
           <p className="text-gray-600 mb-6">
-            Impossible de charger les données de la boulangerie.
+            Nous rencontrons actuellement des difficultés techniques. Veuillez réessayer dans quelques instants.
           </p>
-          <div className="space-y-3">
-            <Link href="/setup-demo">
-              <Button variant="secondary">
-                Créer une boulangerie de démo
-              </Button>
-            </Link>
-          </div>
+          <Button onClick={() => window.location.reload()}>
+            Réessayer
+          </Button>
         </div>
       </div>
     );

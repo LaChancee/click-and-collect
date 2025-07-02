@@ -1,4 +1,3 @@
-import { ContactSupportDialog } from "@/features/contact/support/contact-support-dialog";
 import Link from "next/link";
 import type { PropsWithChildren } from "react";
 import { Typography } from "../../components/nowts/typography";
@@ -26,7 +25,6 @@ export function Page400(props: Page400Props) {
         <Link href="/" className={buttonVariants({ variant: "invert" })}>
           Go back home
         </Link>
-        <ContactSupportDialog />
       </div>
     </main>
   );

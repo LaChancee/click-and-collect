@@ -17,7 +17,7 @@ import { Layout } from "@/features/page/layout";
 import { SiteConfig } from "@/site-config";
 import { Building2, Home, User } from "lucide-react";
 import type { PropsWithChildren } from "react";
-import { SidebarUserButton } from "../sidebar/sidebar-user-button";
+import { SidebarUserButtonServer } from "../sidebar/sidebar-user-button-server";
 
 export function BaseNavigation({ children }: PropsWithChildren) {
   return (
@@ -67,7 +67,7 @@ const BaseSidebar = () => {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="flex flex-col gap-2">
-        <SidebarUserButton />
+        <SidebarUserButtonServer />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

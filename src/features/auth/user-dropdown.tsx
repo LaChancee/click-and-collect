@@ -1,11 +1,11 @@
 "use client";
 
-import { Loader } from "@/components/nowts/loader";
-import { Typography } from "@/components/nowts/typography";
+import { Monitor, Moon, SunMedium, SunMoon, Settings, User, ShoppingBag, ChefHat, LogOut } from "lucide-react";
+import Link from "next/link";
+import type { PropsWithChildren } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuPortal,
@@ -15,44 +15,29 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { signOut, useSession } from "@/lib/auth-client";
-import { useMutation } from "@tanstack/react-query";
-import {
-  LayoutDashboard,
-  LogOut,
-  Monitor,
-  Moon,
-  Settings,
-  SunMedium,
-  SunMoon,
-  ShoppingBag,
-  User,
-  ChefHat,
-} from "lucide-react";
-
+import { Typography } from "@/components/nowts/typography";
 import { useTheme } from "next-themes";
-import Link from "next/link";
+import { useSession, signOut } from "@/lib/auth-client";
+import { useUserType } from "@/hooks/use-user-type";
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import type { PropsWithChildren } from "react";
 
 export const UserDropdown = ({ children }: PropsWithChildren) => {
+  const session = useSession();
+  const { setTheme } = useTheme();
+  const { isBakery, isClient, bakeryInfo } = useUserType();
   const router = useRouter();
+
   const logout = useMutation({
     mutationFn: async () => signOut(),
     onSuccess: () => {
       void router.push("/auth/signin");
     },
   });
-  const session = useSession();
-  const theme = useTheme();
 
   if (!session.data?.user) {
     return null;
   }
-
-  // Vérifier si l'utilisateur a des organisations boulangerie
-  // Note: Cette logique devra être améliorée quand on aura accès aux données d'organisation côté client
-  const hasBakeryOrg = session.data?.user?.id; // Placeholder - à remplacer par la vraie logique
 
   return (
     <DropdownMenu>
@@ -65,6 +50,11 @@ export const UserDropdown = ({ children }: PropsWithChildren) => {
                 {session.data.user.name || session.data.user.email}
               </Typography>
               <Typography variant="muted">{session.data.user.email}</Typography>
+              {isBakery && bakeryInfo && (
+                <Typography variant="muted" className="text-orange-600 font-medium">
+                  🥖 {bakeryInfo.name}
+                </Typography>
+              )}
             </>
           ) : (
             <Typography variant="small">{session.data.user.email}</Typography>
@@ -72,43 +62,46 @@ export const UserDropdown = ({ children }: PropsWithChildren) => {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {/* Liens contextuels selon le type d'utilisateur */}
-        <DropdownMenuItem asChild>
-          <Link href="/account/profile">
-            <User className="mr-2 size-4" />
-            Mon profil
-          </Link>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem asChild>
-          <Link href="/account/orders">
-            <ShoppingBag className="mr-2 size-4" />
-            Mes commandes
-          </Link>
-        </DropdownMenuItem>
-
-        {/* Si l'utilisateur a une boulangerie, afficher le lien dashboard */}
-        {hasBakeryOrg && (
+        {/* Liens pour les CLIENTS uniquement */}
+        {isClient && !isBakery && (
           <>
-            <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/orgs">
-                <ChefHat className="mr-2 size-4" />
-                Espace boulangerie
+              <Link href="/account/profile">
+                <User className="mr-2 size-4" />
+                Mon profil
               </Link>
             </DropdownMenuItem>
+
+            <DropdownMenuItem asChild>
+              <Link href="/account/orders">
+                <ShoppingBag className="mr-2 size-4" />
+                Mes commandes
+              </Link>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem asChild>
+              <Link href="/account">
+                <Settings className="mr-2 size-4" />
+                Paramètres
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
           </>
         )}
 
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/account">
-            <Settings className="mr-2 size-4" />
-            Paramètres
-          </Link>
-        </DropdownMenuItem>
+        {/* Liens pour les BOULANGERS uniquement */}
+        {isBakery && bakeryInfo && (
+          <>
+            <DropdownMenuItem asChild>
+              <Link href={`/orgs/${bakeryInfo.slug}`}>
+                <ChefHat className="mr-2 size-4" />
+                Dashboard boulangerie
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
 
-        <DropdownMenuSeparator />
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
             <SunMoon className="mr-2 size-4" />
@@ -116,16 +109,16 @@ export const UserDropdown = ({ children }: PropsWithChildren) => {
           </DropdownMenuSubTrigger>
           <DropdownMenuPortal>
             <DropdownMenuSubContent>
-              <DropdownMenuItem onClick={() => theme.setTheme("dark")}>
+              <DropdownMenuItem onClick={() => setTheme("dark")}>
                 <SunMedium className="mr-2 size-4" />
                 <span>Sombre</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => theme.setTheme("light")}>
+              <DropdownMenuItem onClick={() => setTheme("light")}>
                 <Moon className="mr-2 size-4" />
                 <span>Clair</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => theme.setTheme("system")}>
+              <DropdownMenuItem onClick={() => setTheme("system")}>
                 <Monitor className="mr-2 size-4" />
                 <span>Système</span>
               </DropdownMenuItem>
@@ -134,23 +127,16 @@ export const UserDropdown = ({ children }: PropsWithChildren) => {
         </DropdownMenuSub>
 
         <DropdownMenuSeparator />
-
-        <DropdownMenuGroup>
-          <DropdownMenuItem
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              logout.mutate();
-            }}
-          >
-            {logout.isPending ? (
-              <Loader className="mr-2 size-4" />
-            ) : (
-              <LogOut className="mr-2 size-4" />
-            )}
-            <span>Se déconnecter</span>
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            logout.mutate();
+          }}
+        >
+          <LogOut className="mr-2 size-4" />
+          <span>Se déconnecter</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/sidebar";
 import { SidebarNavigationMenu } from "@/components/ui/sidebar-utils";
 import type { NavigationGroup } from "@/features/navigation/navigation.type";
-import { SidebarUserButton } from "@/features/sidebar/sidebar-user-button";
+import { SidebarUserButtonServer } from "@/features/sidebar/sidebar-user-button-server";
 import type { AuthOrganization } from "@/lib/auth/auth-type";
 import { ChevronDown } from "lucide-react";
 import { OrgsSelect } from "../../orgs/[orgSlug]/(navigation)/_navigation/orgs-select";
@@ -40,7 +40,7 @@ export function AccountSidebar({ userOrgs }: { userOrgs: AuthOrganization[] }) {
         ))}
       </SidebarContent>
       <SidebarFooter className="flex flex-col gap-2">
-        <SidebarUserButton />
+        <SidebarUserButtonServer />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/sidebar";
 import { SidebarNavigationMenu } from "@/components/ui/sidebar-utils";
 import type { NavigationGroup } from "@/features/navigation/navigation.type";
-import { SidebarUserButton } from "@/features/sidebar/sidebar-user-button";
+import { SidebarUserButtonServer } from "@/features/sidebar/sidebar-user-button-server";
 import type { AuthRole } from "@/lib/auth/auth-permissions";
 import type { AuthOrganization } from "@/lib/auth/auth-type";
 import { ChevronDown } from "lucide-react";
@@ -69,7 +69,7 @@ export function OrgSidebar({
         ))}
       </SidebarContent>
       <SidebarFooter className="flex flex-col gap-2">
-        <SidebarUserButton />
+        <SidebarUserButtonServer />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

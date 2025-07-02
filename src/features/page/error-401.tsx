@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/card";
 import type { PropsWithChildren } from "react";
 import { Typography } from "../../components/nowts/typography";
-import { ContactSupportDialog } from "../contact/support/contact-support-dialog";
+import { ContactSupportDialogServer } from "../contact/support/contact-support-dialog-server";
 
 type Error401Props = PropsWithChildren<{
   title?: string;
@@ -25,7 +25,7 @@ export function Error401(props: Error401Props) {
         </CardDescription>
       </CardHeader>
       <CardFooter className="flex flex-row gap-2">
-        <ContactSupportDialog />
+        <ContactSupportDialogServer />
       </CardFooter>
     </Card>
   );

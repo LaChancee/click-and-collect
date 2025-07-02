@@ -16,13 +16,16 @@ import {
   ShoppingBag,
   Mail,
   Eye,
-  Loader2
+  Loader2,
+  Clock,
+  X
 } from "lucide-react";
 import { updateOrderStatusAction } from "../[orderId]/_actions/update-order-status.action";
 import { useMutation } from "@tanstack/react-query";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { toast } from "sonner";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 interface QuickOrderActionsProps {
   orderId: string;
@@ -61,114 +64,166 @@ export function QuickOrderActions({
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      PENDING: { label: "En attente", variant: "secondary" as const },
-      CONFIRMED: { label: "Confirmée", variant: "default" as const },
-      PREPARING: { label: "En préparation", variant: "default" as const },
-      READY: { label: "Prête", variant: "default" as const },
-      COMPLETED: { label: "Récupérée", variant: "default" as const },
-      CANCELLED: { label: "Annulée", variant: "destructive" as const },
+      PENDING: { label: "En attente", variant: "secondary" as const, color: "bg-orange-100 text-orange-800" },
+      CONFIRMED: { label: "Confirmée", variant: "default" as const, color: "bg-blue-100 text-blue-800" },
+      PREPARING: { label: "En préparation", variant: "default" as const, color: "bg-purple-100 text-purple-800" },
+      READY: { label: "Prête", variant: "default" as const, color: "bg-green-100 text-green-800" },
+      COMPLETED: { label: "Récupérée", variant: "default" as const, color: "bg-gray-100 text-gray-800" },
+      CANCELLED: { label: "Annulée", variant: "destructive" as const, color: "bg-red-100 text-red-800" },
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.PENDING;
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    return (
+      <Badge className={cn("px-3 py-1 font-medium", config.color)}>
+        {config.label}
+      </Badge>
+    );
   };
 
-  const quickActions = [
-    {
-      status: "CONFIRMED",
-      label: "Confirmer",
-      icon: CheckCircle,
-      description: "Confirmer la commande",
-    },
-    {
-      status: "PREPARING",
-      label: "En préparation",
-      icon: Package,
-      description: "Marquer comme en préparation",
-    },
-    {
-      status: "READY",
-      label: "Prête",
-      icon: ShoppingBag,
-      description: "Marquer comme prête",
-    },
-    {
-      status: "COMPLETED",
-      label: "Récupérée",
-      icon: CheckCircle,
-      description: "Marquer comme récupérée",
-    },
-  ];
+  // Définir les actions disponibles selon le statut actuel
+  const getAvailableActions = () => {
+    const actions = [];
+
+    switch (currentStatus) {
+      case "PENDING":
+        actions.push(
+          { status: "CONFIRMED", label: "Confirmer", icon: CheckCircle, color: "bg-blue-600 hover:bg-blue-700 text-white" },
+          { status: "CANCELLED", label: "Annuler", icon: X, color: "bg-red-600 hover:bg-red-700 text-white" }
+        );
+        break;
+      case "CONFIRMED":
+        actions.push(
+          { status: "PREPARING", label: "En préparation", icon: Package, color: "bg-purple-600 hover:bg-purple-700 text-white" },
+          { status: "CANCELLED", label: "Annuler", icon: X, color: "bg-red-600 hover:bg-red-700 text-white" }
+        );
+        break;
+      case "PREPARING":
+        actions.push(
+          { status: "READY", label: "Prête", icon: ShoppingBag, color: "bg-green-600 hover:bg-green-700 text-white" }
+        );
+        break;
+      case "READY":
+        actions.push(
+          { status: "COMPLETED", label: "Récupérée", icon: CheckCircle, color: "bg-gray-600 hover:bg-gray-700 text-white" }
+        );
+        break;
+    }
+
+    return actions;
+  };
+
+  const availableActions = getAvailableActions();
+  const firstAction = availableActions[0];
+  const FirstActionIcon = firstAction?.icon;
 
   return (
-    <div className="flex items-center gap-2">
-      {getStatusBadge(currentStatus)}
+    <div className="space-y-2">
+      {/* Statut actuel */}
+      <div className="text-center">
+        {getStatusBadge(currentStatus)}
+      </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+      {/* Interface tablette : Boutons grands et simples */}
+      <div className="block lg:hidden space-y-2">
+        {availableActions.map((action) => {
+          const Icon = action.icon;
+          return (
+            <Button
+              key={action.status}
+              onClick={() => handleStatusUpdate(action.status, hasCustomerEmail)}
+              disabled={updateStatusMutation.isPending}
+              className={cn(
+                "w-full h-12 text-lg font-medium flex items-center justify-center gap-3",
+                action.color
+              )}
+            >
+              {updateStatusMutation.isPending ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Icon className="h-5 w-5" />
+              )}
+              {action.label}
+            </Button>
+          );
+        })}
+
+        {/* Bouton voir détails */}
+        <Link href={`/orgs/${orgSlug}/orders/${orderId}`}>
+          <Button variant="outline" className="w-full h-10 text-sm">
+            <Eye className="h-4 w-4 mr-2" />
+            Voir détails
+          </Button>
+        </Link>
+      </div>
+
+      {/* Interface desktop : Menu déroulant compact */}
+      <div className="hidden lg:flex items-center gap-2">
+        {/* Premier bouton d'action principal */}
+        {firstAction && FirstActionIcon && (
           <Button
-            variant="ghost"
-            size="sm"
+            key={firstAction.status}
+            onClick={() => handleStatusUpdate(firstAction.status, hasCustomerEmail)}
             disabled={updateStatusMutation.isPending}
+            size="sm"
+            className={cn("flex items-center gap-1", firstAction.color)}
           >
             {updateStatusMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-3 w-3 animate-spin" />
             ) : (
-              <MoreHorizontal className="h-4 w-4" />
+              <FirstActionIcon className="h-3 w-3" />
             )}
+            {firstAction.label}
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuItem asChild>
-            <Link href={`/orgs/${orgSlug}/orders/${orderId}`}>
-              <Eye className="h-4 w-4 mr-2" />
-              Voir les détails
-            </Link>
-          </DropdownMenuItem>
+        )}
 
-          <DropdownMenuSeparator />
-
-          {quickActions.map((action) => {
-            const Icon = action.icon;
-            const isDisabled = currentStatus === action.status;
-
-            return (
-              <DropdownMenuItem
-                key={action.status}
-                disabled={isDisabled}
-                onClick={() => handleStatusUpdate(action.status)}
+        {/* Menu pour les autres actions */}
+        {availableActions.length > 1 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={updateStatusMutation.isPending}
               >
-                <Icon className="h-4 w-4 mr-2" />
-                {action.label}
+                <MoreHorizontal className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem asChild>
+                <Link href={`/orgs/${orgSlug}/orders/${orderId}`}>
+                  <Eye className="h-4 w-4 mr-2" />
+                  Voir les détails
+                </Link>
               </DropdownMenuItem>
-            );
-          })}
 
-          {hasCustomerEmail && (
-            <>
               <DropdownMenuSeparator />
-              {quickActions.map((action) => {
-                const Icon = action.icon;
-                const isDisabled = currentStatus === action.status;
 
+              {availableActions.slice(1).map((action) => {
+                const Icon = action.icon;
                 return (
                   <DropdownMenuItem
-                    key={`${action.status}-email`}
-                    disabled={isDisabled}
-                    onClick={() => handleStatusUpdate(action.status, true)}
+                    key={action.status}
+                    onClick={() => handleStatusUpdate(action.status)}
                   >
-                    <div className="flex items-center">
-                      <Icon className="h-4 w-4 mr-2" />
-                      <span>{action.label}</span>
-                      <Mail className="h-3 w-3 ml-2 text-blue-600" />
-                    </div>
+                    <Icon className="h-4 w-4 mr-2" />
+                    {action.label}
                   </DropdownMenuItem>
                 );
               })}
-            </>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+
+      {/* Indicateur d'envoi d'email pour tablettes */}
+      {hasCustomerEmail && (
+        <div className="block lg:hidden">
+          <div className="flex items-center justify-center gap-1 text-xs text-gray-500 mt-1">
+            <Mail className="h-3 w-3" />
+            <span>Email envoyé automatiquement</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

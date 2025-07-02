@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { getUser } from "@/lib/auth/auth-user";
+import { getBakeryUser, getUser } from "@/lib/auth/auth-user";
 import { SiteConfig } from "@/site-config";
 import { ChefHat, ShoppingBag, Users, AlertTriangle } from "lucide-react";
 import Link from "next/link";
@@ -16,10 +16,20 @@ import { redirect } from "next/navigation";
 import type { PageParams } from "@/types/next";
 
 export default async function AuthChoicePage(props: PageParams) {
+  // Vérifier si l'utilisateur est déjà connecté
   const user = await getUser();
 
   if (user) {
-    redirect("/orgs");
+    // Si l'utilisateur est connecté, vérifier son type
+    const bakeryUser = await getBakeryUser();
+
+    if (bakeryUser) {
+      // L'utilisateur est une boulangerie, rediriger vers son dashboard
+      redirect(`/orgs/${bakeryUser.bakery.slug}`);
+    } else {
+      // L'utilisateur est un client, rediriger vers la boutique
+      redirect("/");
+    }
   }
 
   const searchParams = await props.searchParams;

@@ -133,6 +133,24 @@ export const auth = betterAuth({
   },
   socialProviders: SocialProviders,
   plugins: [
+    magicLink({
+      sendMagicLink: async ({ email, url }) => {
+        await sendEmail({
+          to: email,
+          subject: "Sign in to your account",
+          react: MarkdownEmail({
+            preview: `Sign in to ${SiteConfig.title}`,
+            markdown: `
+            Hello,
+
+            Click the link below to sign in to your account.
+
+            [Sign in](${url})
+            `,
+          }),
+        });
+      },
+    }),
     organization({
       ac: ac,
       roles: roles,
@@ -147,6 +165,23 @@ export const auth = betterAuth({
           },
         },
       },
-    })
-  ]
+    }),
+    stripePlugin({
+      stripe: stripe,
+      paymentPlans: AUTH_PLANS,
+      webhookSecret: env.STRIPE_WEBHOOK_SECRET,
+      async onCustomerCreated(customer, user) {
+        logger.info("Customer created", { customer, user });
+      },
+      async onSubscriptionCreated(subscription, user) {
+        logger.info("Subscription created", { subscription, user });
+      },
+      async onSubscriptionUpdated(subscription, user) {
+        logger.info("Subscription updated", { subscription, user });
+      },
+      async onInvoicePaid(invoice, subscription, user) {
+        logger.info("Invoice paid", { invoice, subscription, user });
+      },
+    }),
+  ],
 });
