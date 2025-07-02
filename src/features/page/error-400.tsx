@@ -9,7 +9,7 @@ import {
 import Link from "next/link";
 import type { PropsWithChildren } from "react";
 import { Typography } from "../../components/nowts/typography";
-import { ContactSupportDialogServer } from "../contact/support/contact-support-dialog-server";
+
 
 type Page400Props = PropsWithChildren<{
   title?: string;
@@ -31,7 +31,7 @@ export function Error400(props: Page400Props) {
         <Link href="/" className={buttonVariants({ variant: "invert" })}>
           Go back home
         </Link>
-        <ContactSupportDialogServer />
+
       </CardFooter>
     </Card>
   );

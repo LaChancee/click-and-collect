@@ -17,7 +17,7 @@ export function Page404() {
         <Link href="/" className={buttonVariants({ variant: "invert" })}>
           Go back home
         </Link>
-        <ContactSupportDialogServer />
+
       </div>
     </main>
   );

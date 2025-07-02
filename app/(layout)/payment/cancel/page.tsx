@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { ContactSupportDialogServer } from "@/features/contact/support/contact-support-dialog-server";
+
 import {
   Layout,
   LayoutContent,
@@ -32,7 +32,7 @@ export default function CancelPaymentPage() {
         <Link href="/" className={buttonVariants({ variant: "invert" })}>
           Home
         </Link>
-        <ContactSupportDialogServer />
+
       </LayoutContent>
     </Layout>
   );

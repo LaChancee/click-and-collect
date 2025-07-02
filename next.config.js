@@ -35,6 +35,14 @@ const nextConfig = {
         protocol: "https",
         hostname: "utfs.io",
       },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+      },
+      {
+        protocol: "https",
+        hostname: "avatars.githubusercontent.com",
+      },
     ],
     formats: ["image/webp", "image/avif"],
   },

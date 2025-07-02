@@ -23,10 +23,10 @@ export const fetchCache = "force-no-store";
 export default async function ArticlesPage({
   params
 }: {
-  params: { orgSlug: string }
+  params: Promise<{ orgSlug: string }>
 }) {
   // Extraire le slug de l'organisation
-  const orgSlug = await params.orgSlug;
+  const { orgSlug } = await params;
   console.log("Slug de l'organisation:", orgSlug);
 
   // Vérifier s'il y a des organisations en base

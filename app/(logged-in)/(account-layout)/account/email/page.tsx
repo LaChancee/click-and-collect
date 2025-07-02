@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ContactSupportDialogServer } from "@/features/contact/support/contact-support-dialog-server";
+
 import { env } from "@/lib/env";
 import { resend } from "@/lib/mail/resend";
 import { combineWithParentMetadata } from "@/lib/metadata";
@@ -62,7 +62,7 @@ const ErrorComponent = () => {
         </CardDescription>
       </CardHeader>
       <CardFooter>
-        <ContactSupportDialogServer />
+
       </CardFooter>
     </Card>
   );
