@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { User } from "lucide-react";
 import { ArticleGrid } from "./ArticleGrid";
 import { CartSidebar } from "./CartSidebar";
 import { CategoryTabs } from "./CategoryTabs";
 import { SidebarMenu } from "./SidebarMenu";
 import { ShopHeader } from "./ShopHeader";
+import { AdminAccessButton } from "./AdminAccessButton";
 
 interface Category {
   id: string;
@@ -79,14 +79,9 @@ export function ShopClient({ bakery, categories, articles, mealDeals = [] }: Sho
       {/* Header simplifié avec juste l'image */}
       <ShopHeader bakery={bakery} />
 
-      {/* Bouton de connexion flottant - Mobile only */}
+      {/* Bouton d'authentification flottant - Mobile only */}
       <div className="lg:hidden fixed top-4 right-4 z-50">
-        <Link
-          href="/auth"
-          className="bg-gray-900 text-white p-3 rounded-full shadow-lg hover:bg-gray-800 transition-colors flex items-center justify-center"
-        >
-          <User className="w-5 h-5" />
-        </Link>
+        <AdminAccessButton bakery={bakery} />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">

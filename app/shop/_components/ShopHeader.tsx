@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { MapPin, Clock, Phone } from "lucide-react";
+import { AdminAccessButton } from "./AdminAccessButton";
 
 interface BakeryInfo {
   id: string;
@@ -47,6 +48,11 @@ export function ShopHeader({ bakery }: ShopHeaderProps) {
               {bakery.name}
             </h1>
           </div>
+        </div>
+
+        {/* Bouton d'administration en haut à droite - Desktop only */}
+        <div className="absolute top-4 right-4 hidden lg:block">
+          <AdminAccessButton bakery={bakery} />
         </div>
       </div>
 

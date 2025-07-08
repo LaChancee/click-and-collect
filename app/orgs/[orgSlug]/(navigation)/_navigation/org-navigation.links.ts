@@ -18,6 +18,7 @@ import {
   UtensilsCrossed,
   User,
   User2,
+  Store,
 } from "lucide-react";
 
 const replaceSlug = (href: string, slug: string) => {
@@ -58,6 +59,11 @@ export const ORGANIZATION_LINKS: NavigationGroup[] = [
         href: ORGANIZATION_PATH,
         Icon: Home,
         label: "Dashboard",
+      },
+      {
+        href: `/shop?bakery=:organizationSlug`,
+        Icon: Store,
+        label: "Voir ma boutique",
       },
       {
         href: `${ORGANIZATION_PATH}/articles`,
