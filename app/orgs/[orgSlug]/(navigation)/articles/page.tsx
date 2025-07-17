@@ -27,15 +27,7 @@ export default async function ArticlesPage({
 }) {
   // Extraire le slug de l'organisation
   const { orgSlug } = await params;
-  console.log("Slug de l'organisation:", orgSlug);
 
-  // Vérifier s'il y a des organisations en base
-  const orgCount = await prisma.organization.count();
-  console.log(`Nombre total d'organisations en base: ${orgCount}`);
-
-  if (orgCount === 0) {
-    console.error("ERREUR: Aucune organisation dans la base de données");
-  }
 
   // Récupérer les informations de l'organisation
   const currentOrg = await prisma.organization.findUnique({
@@ -217,49 +209,53 @@ export default async function ArticlesPage({
   ];
 
   return (
-    <div className="container py-6 space-y-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between">
+    <div className="container py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-7xl mx-auto">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <Heading
           title="Gestion des articles"
           description="Gérez les produits proposés par votre boulangerie"
         />
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <SeedCategoriesButton
             orgId={currentOrg.id}
             orgSlug={orgSlug}
             hasCategories={categories.length > 0}
           />
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" className="w-full sm:w-auto">
             <a href={`/orgs/${orgSlug}/articles/categories/new`}>
               <Plus className="mr-2 h-4 w-4" />
-              Ajouter une catégorie
+              <span className="hidden sm:inline">Ajouter une catégorie</span>
+              <span className="sm:hidden">Nouvelle catégorie</span>
             </a>
           </Button>
-          <Button asChild>
+          <Button asChild className="w-full sm:w-auto">
             <a href={`/orgs/${orgSlug}/articles/new`}>
               <Plus className="mr-2 h-4 w-4" />
-              Ajouter un produit
+              <span className="hidden sm:inline">Ajouter un produit</span>
+              <span className="sm:hidden">Nouveau produit</span>
             </a>
           </Button>
         </div>
       </div>
-      <Separator className="my-6" />
+      <Separator className="my-4 sm:my-6" />
 
       <Tabs defaultValue="all" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="all">Tous les produits</TabsTrigger>
-          {categories.map((category) => (
-            <TabsTrigger key={category.id} value={category.id}>
-              {category.name}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList className="mb-4 w-full sm:w-auto">
+            <TabsTrigger value="all" className="text-sm">Tous les produits</TabsTrigger>
+            {categories.map((category) => (
+              <TabsTrigger key={category.id} value={category.id} className="text-sm">
+                {category.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
         <TabsContent value="all" className="mt-0">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle>Tous les produits</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-lg">Tous les produits</CardTitle>
+              <CardDescription className="text-sm">
                 {articles.length} produit{articles.length !== 1 ? 's' : ''} au total
               </CardDescription>
             </CardHeader>
@@ -306,8 +302,8 @@ export default async function ArticlesPage({
           <TabsContent key={category.id} value={category.id} className="mt-0">
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle>{category.name}</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-lg">{category.name}</CardTitle>
+                <CardDescription className="text-sm">
                   {articles.filter(
                     (article) => article.categoryId === category.id
                   ).length} produit{

@@ -98,16 +98,18 @@ export default async function OrdersPage({ params }: OrdersPageProps) {
     .reduce((sum, order) => sum + Number(order.totalAmount), 0);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Gestion des commandes</h1>
-        <p className="text-gray-600">
-          Suivez et gérez toutes les commandes Click & Collect de votre boulangerie
-        </p>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold">Gestion des commandes</h1>
+          <p className="text-sm sm:text-base text-gray-600">
+            Suivez et gérez toutes les commandes Click & Collect de votre boulangerie
+          </p>
+        </div>
       </div>
 
       {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total commandes</CardTitle>
@@ -152,7 +154,7 @@ export default async function OrdersPage({ params }: OrdersPageProps) {
       {/* Tableau des commandes */}
       <Card>
         <CardHeader>
-          <CardTitle>Toutes les commandes</CardTitle>
+          <CardTitle className="text-lg">Toutes les commandes</CardTitle>
         </CardHeader>
         <CardContent>
           <OrdersDataTable orgSlug={orgSlug} data={orders} />

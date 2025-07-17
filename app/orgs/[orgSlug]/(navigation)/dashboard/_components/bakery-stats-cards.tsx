@@ -157,7 +157,7 @@ export async function BakeryStatsCards() {
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
       {stats.map((stat, index) => (
         <Card key={index} className="relative overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -173,13 +173,13 @@ export async function BakeryStatsCards() {
                 {stat.description}
               </p>
               {stat.trend === "up" && (
-                <Badge variant="secondary" className="text-green-600 bg-green-50">
+                <Badge variant="secondary" className="text-green-600 bg-green-50 hidden sm:flex">
                   <TrendingUp className="h-3 w-3 mr-1" />
                   Croissance
                 </Badge>
               )}
               {stat.trend === "warning" && (
-                <Badge variant="secondary" className="text-orange-600 bg-orange-50">
+                <Badge variant="secondary" className="text-orange-600 bg-orange-50 hidden sm:flex">
                   <AlertCircle className="h-3 w-3 mr-1" />
                   Attention
                 </Badge>

@@ -53,7 +53,7 @@ export async function RecentOrdersCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Commandes récentes</CardTitle>
+        <CardTitle className="text-lg">Commandes récentes</CardTitle>
         <CardDescription>
           Les {recentOrders.length} dernières commandes
         </CardDescription>
@@ -66,17 +66,19 @@ export async function RecentOrdersCard() {
             </div>
           ) : (
             recentOrders.map((order) => (
-              <div key={order.id} className="flex items-center justify-between p-3 border rounded-lg">
+              <div key={order.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg gap-3">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-2">
                     <span className="font-medium">#{order.orderNumber}</span>
                     {getStatusBadge(order.status)}
                   </div>
 
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <User className="h-3 w-3" />
-                      {order.customer?.name || order.guestName || "Client invité"}
+                      <span className="truncate">
+                        {order.customer?.name || order.guestName || "Client invité"}
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-1">

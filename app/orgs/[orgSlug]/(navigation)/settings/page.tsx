@@ -49,16 +49,16 @@ export default async function RoutePage(props: PageParams) {
 
       <LayoutContent>
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="general">Général</TabsTrigger>
-            <TabsTrigger value="payments">Paiements</TabsTrigger>
-            <TabsTrigger value="danger">Zone de danger</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 h-auto sm:h-10">
+            <TabsTrigger value="general" className="text-sm">Général</TabsTrigger>
+            <TabsTrigger value="payments" className="text-sm">Paiements</TabsTrigger>
+            <TabsTrigger value="danger" className="text-sm">Zone de danger</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Informations de la boulangerie</CardTitle>
+                <CardTitle className="text-lg">Informations de la boulangerie</CardTitle>
                 <CardDescription>
                   Modifiez les informations de base de votre boulangerie
                 </CardDescription>
@@ -75,7 +75,7 @@ export default async function RoutePage(props: PageParams) {
           <TabsContent value="payments" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Configuration Stripe</CardTitle>
+                <CardTitle className="text-lg">Configuration Stripe</CardTitle>
                 <CardDescription>
                   Configurez votre compte Stripe pour recevoir les paiements de vos clients
                 </CardDescription>
@@ -99,7 +99,7 @@ export default async function RoutePage(props: PageParams) {
                       <h3 className="text-lg font-semibold mb-2">
                         Connectez votre compte Stripe
                       </h3>
-                      <p className="text-muted-foreground mb-6">
+                      <p className="text-muted-foreground mb-6 text-sm sm:text-base">
                         Pour recevoir les paiements de vos clients, vous devez connecter votre compte Stripe.
                       </p>
                       <StripeConnectButton />
@@ -113,7 +113,7 @@ export default async function RoutePage(props: PageParams) {
           <TabsContent value="danger" className="space-y-6">
             <Card className="border-destructive">
               <CardHeader>
-                <CardTitle className="text-destructive">Zone de danger</CardTitle>
+                <CardTitle className="text-destructive text-lg">Zone de danger</CardTitle>
                 <CardDescription>
                   Actions irréversibles pour votre boulangerie
                 </CardDescription>

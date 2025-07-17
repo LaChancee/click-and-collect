@@ -1,547 +1,384 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { addDays, startOfDay, setHours, setMinutes, getDay } from "date-fns";
+import { describe, it, expect, vi } from "vitest";
 
-// Mock Prisma
-const mockPrisma = {
-  timeSlot: {
-    findMany: vi.fn(),
-    findUnique: vi.fn(),
-    create: vi.fn(),
-    createMany: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
-    count: vi.fn(),
-  },
-  settings: {
-    findUnique: vi.fn(),
-    update: vi.fn(),
-  },
-  order: {
-    count: vi.fn(),
-  },
-};
-
-vi.mock("@/lib/prisma", () => ({
-  prisma: mockPrisma,
-}));
-
-// Utility functions for time slot generation
-const generateTimeSlots = (params: {
-  startDate: Date;
-  endDate: Date;
-  startTime: string;
-  endTime: string;
-  duration: number;
+// Types pour les créneaux horaires
+interface TimeSlot {
+  id: string;
+  startTime: Date;
+  endTime: Date;
   maxOrders: number;
-  daysOfWeek: number[];
-  bakeryId: string;
-}) => {
-  const {
-    startDate,
-    endDate,
-    startTime,
-    endTime,
-    duration,
-    maxOrders,
-    daysOfWeek,
-    bakeryId,
-  } = params;
+  currentOrders: number;
+  isActive: boolean;
+}
 
-  const [startHour, startMinute] = startTime.split(":").map(Number);
-  const [endHour, endMinute] = endTime.split(":").map(Number);
+// Utilitaires pour les créneaux horaires
+export function isTimeSlotAvailable(slot: TimeSlot): boolean {
+  return slot.isActive && slot.currentOrders < slot.maxOrders;
+}
 
-  const startMinutes = startHour * 60 + startMinute;
-  const endMinutes = endHour * 60 + endMinute;
+export function isTimeSlotInFuture(
+  slot: TimeSlot,
+  currentTime: Date = new Date(),
+): boolean {
+  return slot.startTime > currentTime;
+}
 
-  const timeSlotsToCreate = [];
-  let currentDate = startOfDay(startDate);
+export function formatTimeSlot(slot: TimeSlot): string {
+  const startTime = slot.startTime.toLocaleTimeString("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const endTime = slot.endTime.toLocaleTimeString("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
-  while (currentDate <= endDate) {
-    const dayOfWeek = getDay(currentDate);
+  return `${startTime} - ${endTime}`;
+}
 
-    if (daysOfWeek.includes(dayOfWeek)) {
-      let currentMinutes = startMinutes;
+export function getRemainingCapacity(slot: TimeSlot): number {
+  return Math.max(0, slot.maxOrders - slot.currentOrders);
+}
 
-      while (currentMinutes + duration <= endMinutes) {
-        const slotStartTime = setMinutes(
-          setHours(startOfDay(currentDate), Math.floor(currentMinutes / 60)),
-          currentMinutes % 60,
-        );
+export function getSlotCapacityPercentage(slot: TimeSlot): number {
+  return (slot.currentOrders / slot.maxOrders) * 100;
+}
 
-        const slotEndTime = setMinutes(
-          setHours(
-            startOfDay(currentDate),
-            Math.floor((currentMinutes + duration) / 60),
-          ),
-          (currentMinutes + duration) % 60,
-        );
+export function canBookSlot(
+  slot: TimeSlot,
+  additionalOrders: number = 1,
+): boolean {
+  return (
+    isTimeSlotAvailable(slot) &&
+    isTimeSlotInFuture(slot) &&
+    slot.currentOrders + additionalOrders <= slot.maxOrders
+  );
+}
 
-        timeSlotsToCreate.push({
-          startTime: slotStartTime,
-          endTime: slotEndTime,
-          maxOrders,
-          isActive: true,
-          bakeryId,
-        });
+export function generateTimeSlots(
+  date: Date,
+  startHour: number,
+  endHour: number,
+  intervalMinutes: number,
+  maxOrdersPerSlot: number,
+): Omit<TimeSlot, "id" | "currentOrders" | "isActive">[] {
+  const slots: Omit<TimeSlot, "id" | "currentOrders" | "isActive">[] = [];
 
-        currentMinutes += duration;
+  for (let hour = startHour; hour < endHour; hour++) {
+    for (let minute = 0; minute < 60; minute += intervalMinutes) {
+      const startTime = new Date(date);
+      startTime.setHours(hour, minute, 0, 0);
+
+      const endTime = new Date(startTime);
+      endTime.setMinutes(endTime.getMinutes() + intervalMinutes);
+
+      // Ne pas créer de créneaux qui dépassent l'heure de fin
+      if (endTime.getHours() > endHour) {
+        break;
       }
-    }
 
-    currentDate = addDays(currentDate, 1);
+      slots.push({
+        startTime,
+        endTime,
+        maxOrders: maxOrdersPerSlot,
+      });
+    }
   }
 
-  return timeSlotsToCreate;
-};
+  return slots;
+}
 
-const validateTimeSlotAvailability = (timeSlot: {
-  maxOrders: number;
-  currentOrders: number;
-}) => {
-  return timeSlot.currentOrders < timeSlot.maxOrders;
-};
+export function filterAvailableSlots(slots: TimeSlot[]): TimeSlot[] {
+  const now = new Date();
+  return slots.filter(
+    (slot) => isTimeSlotAvailable(slot) && isTimeSlotInFuture(slot, now),
+  );
+}
 
-const calculateTimeSlotOccupancy = (timeSlot: {
-  maxOrders: number;
-  currentOrders: number;
-}) => {
-  return (timeSlot.currentOrders / timeSlot.maxOrders) * 100;
-};
+export function groupSlotsByDate(
+  slots: TimeSlot[],
+): Record<string, TimeSlot[]> {
+  return slots.reduce(
+    (groups, slot) => {
+      const dateKey = slot.startTime.toISOString().split("T")[0];
+      if (!groups[dateKey]) {
+        groups[dateKey] = [];
+      }
+      groups[dateKey].push(slot);
+      return groups;
+    },
+    {} as Record<string, TimeSlot[]>,
+  );
+}
 
-describe("Time Slots Management", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+export function getSlotDuration(slot: TimeSlot): number {
+  return slot.endTime.getTime() - slot.startTime.getTime();
+}
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
+export function isSlotDurationValid(
+  slot: TimeSlot,
+  minDurationMinutes: number = 15,
+): boolean {
+  const durationMs = getSlotDuration(slot);
+  const minDurationMs = minDurationMinutes * 60 * 1000;
+  return durationMs >= minDurationMs;
+}
 
-  describe("Time slot generation", () => {
-    it("should generate time slots correctly for a single day", () => {
-      const today = new Date("2024-01-15T00:00:00Z");
-      const params = {
-        startDate: today,
-        endDate: today,
-        startTime: "08:00",
-        endTime: "12:00",
-        duration: 30, // 30 minutes
-        maxOrders: 5,
-        daysOfWeek: [1], // Monday
-        bakeryId: "bakery-123",
-      };
+// Tests
+describe("Time Slot Utils", () => {
+  const baseDate = new Date("2024-01-15T10:00:00");
 
-      const slots = generateTimeSlots(params);
+  const sampleSlot: TimeSlot = {
+    id: "slot-1",
+    startTime: new Date("2024-01-15T10:00:00"),
+    endTime: new Date("2024-01-15T10:15:00"),
+    maxOrders: 10,
+    currentOrders: 5,
+    isActive: true,
+  };
 
-      // 4 hours * 2 slots per hour = 8 slots
-      expect(slots).toHaveLength(8);
-
-      // Check first slot
-      expect(slots[0].maxOrders).toBe(5);
-      expect(slots[0].bakeryId).toBe("bakery-123");
-      expect(slots[0].isActive).toBe(true);
+  describe("isTimeSlotAvailable", () => {
+    it("should return true for available slot", () => {
+      expect(isTimeSlotAvailable(sampleSlot)).toBe(true);
     });
 
-    it("should generate time slots for multiple days", () => {
-      const startDate = new Date("2024-01-15T00:00:00Z"); // Monday
-      const endDate = new Date("2024-01-19T00:00:00Z"); // Friday
-      const params = {
-        startDate,
-        endDate,
-        startTime: "08:00",
-        endTime: "10:00",
-        duration: 30,
-        maxOrders: 5,
-        daysOfWeek: [1, 2, 3, 4, 5], // Monday to Friday
-        bakeryId: "bakery-123",
-      };
-
-      const slots = generateTimeSlots(params);
-
-      // 5 days * 2 hours * 2 slots per hour = 20 slots
-      expect(slots).toHaveLength(20);
+    it("should return false for inactive slot", () => {
+      const inactiveSlot = { ...sampleSlot, isActive: false };
+      expect(isTimeSlotAvailable(inactiveSlot)).toBe(false);
     });
 
-    it("should skip days not in daysOfWeek", () => {
-      const startDate = new Date("2024-01-15T00:00:00Z"); // Monday
-      const endDate = new Date("2024-01-16T00:00:00Z"); // Tuesday
-      const params = {
-        startDate,
-        endDate,
-        startTime: "08:00",
-        endTime: "10:00",
-        duration: 30,
-        maxOrders: 5,
-        daysOfWeek: [1], // Only Monday
-        bakeryId: "bakery-123",
-      };
-
-      const slots = generateTimeSlots(params);
-
-      // Only Monday should be included: 2 hours * 2 slots = 4 slots
-      expect(slots).toHaveLength(4);
-    });
-
-    it("should handle 15-minute intervals", () => {
-      const today = new Date("2024-01-15T00:00:00Z");
-      const params = {
-        startDate: today,
-        endDate: today,
-        startTime: "08:00",
-        endTime: "09:00",
-        duration: 15, // 15 minutes
-        maxOrders: 3,
-        daysOfWeek: [1],
-        bakeryId: "bakery-123",
-      };
-
-      const slots = generateTimeSlots(params);
-
-      // 1 hour / 15 minutes = 4 slots
-      expect(slots).toHaveLength(4);
-    });
-
-    it("should handle edge case with no valid days", () => {
-      const today = new Date("2024-01-15T00:00:00Z"); // Monday
-      const params = {
-        startDate: today,
-        endDate: today,
-        startTime: "08:00",
-        endTime: "10:00",
-        duration: 30,
-        maxOrders: 5,
-        daysOfWeek: [0], // Sunday only, but date is Monday
-        bakeryId: "bakery-123",
-      };
-
-      const slots = generateTimeSlots(params);
-
-      expect(slots).toHaveLength(0);
+    it("should return false for full slot", () => {
+      const fullSlot = { ...sampleSlot, currentOrders: 10 };
+      expect(isTimeSlotAvailable(fullSlot)).toBe(false);
     });
   });
 
-  describe("Time slot validation", () => {
-    it("should validate available time slots", () => {
-      const availableSlot = {
-        maxOrders: 10,
-        currentOrders: 5,
+  describe("isTimeSlotInFuture", () => {
+    it("should return true for future slot", () => {
+      const futureSlot = {
+        ...sampleSlot,
+        startTime: new Date("2024-01-15T15:00:00"),
+      };
+      const currentTime = new Date("2024-01-15T10:00:00");
+
+      expect(isTimeSlotInFuture(futureSlot, currentTime)).toBe(true);
+    });
+
+    it("should return false for past slot", () => {
+      const pastSlot = {
+        ...sampleSlot,
+        startTime: new Date("2024-01-15T09:00:00"),
+      };
+      const currentTime = new Date("2024-01-15T10:00:00");
+
+      expect(isTimeSlotInFuture(pastSlot, currentTime)).toBe(false);
+    });
+  });
+
+  describe("formatTimeSlot", () => {
+    it("should format time slot correctly", () => {
+      const result = formatTimeSlot(sampleSlot);
+      expect(result).toBe("10:00 - 10:15");
+    });
+  });
+
+  describe("getRemainingCapacity", () => {
+    it("should calculate remaining capacity correctly", () => {
+      expect(getRemainingCapacity(sampleSlot)).toBe(5);
+    });
+
+    it("should return 0 for full slot", () => {
+      const fullSlot = { ...sampleSlot, currentOrders: 10 };
+      expect(getRemainingCapacity(fullSlot)).toBe(0);
+    });
+
+    it("should return 0 for overbooked slot", () => {
+      const overbookedSlot = { ...sampleSlot, currentOrders: 15 };
+      expect(getRemainingCapacity(overbookedSlot)).toBe(0);
+    });
+  });
+
+  describe("getSlotCapacityPercentage", () => {
+    it("should calculate capacity percentage correctly", () => {
+      expect(getSlotCapacityPercentage(sampleSlot)).toBe(50);
+    });
+
+    it("should return 0 for empty slot", () => {
+      const emptySlot = { ...sampleSlot, currentOrders: 0 };
+      expect(getSlotCapacityPercentage(emptySlot)).toBe(0);
+    });
+
+    it("should return 100 for full slot", () => {
+      const fullSlot = { ...sampleSlot, currentOrders: 10 };
+      expect(getSlotCapacityPercentage(fullSlot)).toBe(100);
+    });
+  });
+
+  describe("canBookSlot", () => {
+    it("should return true for bookable slot", () => {
+      const futureSlot = {
+        ...sampleSlot,
+        startTime: new Date("2024-01-15T15:00:00"),
+        endTime: new Date("2024-01-15T15:15:00"),
       };
 
+      expect(canBookSlot(futureSlot)).toBe(true);
+    });
+
+    it("should return false for full slot", () => {
       const fullSlot = {
-        maxOrders: 10,
+        ...sampleSlot,
         currentOrders: 10,
+        startTime: new Date("2024-01-15T15:00:00"),
+        endTime: new Date("2024-01-15T15:15:00"),
       };
 
-      expect(validateTimeSlotAvailability(availableSlot)).toBe(true);
-      expect(validateTimeSlotAvailability(fullSlot)).toBe(false);
+      expect(canBookSlot(fullSlot)).toBe(false);
     });
 
-    it("should calculate occupancy rate correctly", () => {
-      const slot1 = { maxOrders: 10, currentOrders: 5 };
-      const slot2 = { maxOrders: 10, currentOrders: 8 };
-      const emptySlot = { maxOrders: 10, currentOrders: 0 };
-      const fullSlot = { maxOrders: 10, currentOrders: 10 };
+    it("should return false for past slot", () => {
+      const pastSlot = {
+        ...sampleSlot,
+        startTime: new Date("2024-01-15T09:00:00"),
+        endTime: new Date("2024-01-15T09:15:00"),
+      };
 
-      expect(calculateTimeSlotOccupancy(slot1)).toBe(50);
-      expect(calculateTimeSlotOccupancy(slot2)).toBe(80);
-      expect(calculateTimeSlotOccupancy(emptySlot)).toBe(0);
-      expect(calculateTimeSlotOccupancy(fullSlot)).toBe(100);
+      expect(canBookSlot(pastSlot)).toBe(false);
+    });
+
+    it("should check additional orders capacity", () => {
+      const nearFullSlot = {
+        ...sampleSlot,
+        currentOrders: 8,
+        startTime: new Date("2024-01-15T15:00:00"),
+        endTime: new Date("2024-01-15T15:15:00"),
+      };
+
+      expect(canBookSlot(nearFullSlot, 1)).toBe(true);
+      expect(canBookSlot(nearFullSlot, 2)).toBe(true);
+      expect(canBookSlot(nearFullSlot, 3)).toBe(false);
     });
   });
 
-  describe("Time slot database operations", () => {
-    it("should find time slots for organization", async () => {
-      const mockTimeSlots = [
+  describe("generateTimeSlots", () => {
+    it("should generate time slots correctly", () => {
+      const date = new Date("2024-01-15");
+      const slots = generateTimeSlots(date, 9, 11, 30, 10);
+
+      expect(slots).toHaveLength(4);
+      expect(slots[0].startTime.getHours()).toBe(9);
+      expect(slots[0].startTime.getMinutes()).toBe(0);
+      expect(slots[1].startTime.getHours()).toBe(9);
+      expect(slots[1].startTime.getMinutes()).toBe(30);
+      expect(slots[2].startTime.getHours()).toBe(10);
+      expect(slots[2].startTime.getMinutes()).toBe(0);
+      expect(slots[3].startTime.getHours()).toBe(10);
+      expect(slots[3].startTime.getMinutes()).toBe(30);
+    });
+
+    it("should generate slots with correct duration", () => {
+      const date = new Date("2024-01-15");
+      const slots = generateTimeSlots(date, 9, 10, 15, 10);
+
+      slots.forEach((slot) => {
+        const duration = slot.endTime.getTime() - slot.startTime.getTime();
+        expect(duration).toBe(15 * 60 * 1000); // 15 minutes in milliseconds
+      });
+    });
+  });
+
+  describe("filterAvailableSlots", () => {
+    it("should filter only available and future slots", () => {
+      const now = new Date("2024-01-15T10:00:00");
+      const slots: TimeSlot[] = [
         {
+          // Available and future
+          ...sampleSlot,
           id: "slot-1",
-          startTime: new Date("2024-01-15T08:00:00Z"),
-          endTime: new Date("2024-01-15T08:30:00Z"),
-          maxOrders: 5,
-          currentOrders: 2,
-          bakeryId: "bakery-123",
-          isActive: true,
+          startTime: new Date("2024-01-15T15:00:00"),
+          currentOrders: 5,
         },
         {
+          // Past slot
+          ...sampleSlot,
           id: "slot-2",
-          startTime: new Date("2024-01-15T08:30:00Z"),
-          endTime: new Date("2024-01-15T09:00:00Z"),
-          maxOrders: 5,
-          currentOrders: 0,
-          bakeryId: "bakery-123",
-          isActive: true,
-        },
-      ];
-
-      mockPrisma.timeSlot.findMany.mockResolvedValue(mockTimeSlots);
-
-      const findTimeSlotsForBakery = async (bakeryId: string) => {
-        return await mockPrisma.timeSlot.findMany({
-          where: { bakeryId },
-          orderBy: { startTime: "asc" },
-        });
-      };
-
-      const result = await findTimeSlotsForBakery("bakery-123");
-
-      expect(mockPrisma.timeSlot.findMany).toHaveBeenCalledWith({
-        where: { bakeryId: "bakery-123" },
-        orderBy: { startTime: "asc" },
-      });
-
-      expect(result).toEqual(mockTimeSlots);
-      expect(result).toHaveLength(2);
-    });
-
-    it("should create multiple time slots", async () => {
-      const timeSlotsData = [
-        {
-          startTime: new Date("2024-01-15T08:00:00Z"),
-          endTime: new Date("2024-01-15T08:30:00Z"),
-          maxOrders: 5,
-          isActive: true,
-          bakeryId: "bakery-123",
+          startTime: new Date("2024-01-15T09:00:00"),
+          currentOrders: 5,
         },
         {
-          startTime: new Date("2024-01-15T08:30:00Z"),
-          endTime: new Date("2024-01-15T09:00:00Z"),
-          maxOrders: 5,
-          isActive: true,
-          bakeryId: "bakery-123",
+          // Full slot
+          ...sampleSlot,
+          id: "slot-3",
+          startTime: new Date("2024-01-15T16:00:00"),
+          currentOrders: 10,
+        },
+        {
+          // Inactive slot
+          ...sampleSlot,
+          id: "slot-4",
+          startTime: new Date("2024-01-15T17:00:00"),
+          isActive: false,
         },
       ];
 
-      mockPrisma.timeSlot.createMany.mockResolvedValue({ count: 2 });
+      // Mock Date.now() to return our test time
+      const originalNow = Date.now;
+      Date.now = vi.fn(() => now.getTime());
 
-      const createTimeSlots = async (data: typeof timeSlotsData) => {
-        return await mockPrisma.timeSlot.createMany({
-          data,
-          skipDuplicates: true,
-        });
-      };
+      const availableSlots = filterAvailableSlots(slots);
+      expect(availableSlots).toHaveLength(1);
+      expect(availableSlots[0].id).toBe("slot-1");
 
-      const result = await createTimeSlots(timeSlotsData);
-
-      expect(mockPrisma.timeSlot.createMany).toHaveBeenCalledWith({
-        data: timeSlotsData,
-        skipDuplicates: true,
-      });
-
-      expect(result.count).toBe(2);
-    });
-
-    it("should update time slot occupancy", async () => {
-      const mockUpdatedSlot = {
-        id: "slot-1",
-        currentOrders: 3,
-        updatedAt: new Date(),
-      };
-
-      mockPrisma.timeSlot.update.mockResolvedValue(mockUpdatedSlot);
-
-      const updateTimeSlotOccupancy = async (
-        slotId: string,
-        increment: number,
-      ) => {
-        return await mockPrisma.timeSlot.update({
-          where: { id: slotId },
-          data: {
-            currentOrders: { increment },
-            updatedAt: new Date(),
-          },
-        });
-      };
-
-      const result = await updateTimeSlotOccupancy("slot-1", 1);
-
-      expect(mockPrisma.timeSlot.update).toHaveBeenCalledWith({
-        where: { id: "slot-1" },
-        data: {
-          currentOrders: { increment: 1 },
-          updatedAt: expect.any(Date),
-        },
-      });
-
-      expect(result).toEqual(mockUpdatedSlot);
+      // Restore original Date.now
+      Date.now = originalNow;
     });
   });
 
-  describe("Time slot settings", () => {
-    it("should retrieve bakery time slot settings", async () => {
-      const mockSettings = {
-        id: "settings-1",
-        bakeryId: "bakery-123",
-        storeOpenTime: "08:00",
-        storeCloseTime: "18:00",
-        timeSlotDuration: 30,
-        maxOrdersPerSlot: 5,
-        preOrderDaysAhead: 7,
-      };
-
-      mockPrisma.settings.findUnique.mockResolvedValue(mockSettings);
-
-      const getTimeSlotSettings = async (bakeryId: string) => {
-        return await mockPrisma.settings.findUnique({
-          where: { bakeryId },
-        });
-      };
-
-      const result = await getTimeSlotSettings("bakery-123");
-
-      expect(mockPrisma.settings.findUnique).toHaveBeenCalledWith({
-        where: { bakeryId: "bakery-123" },
-      });
-
-      expect(result).toEqual(mockSettings);
-    });
-
-    it("should update time slot settings", async () => {
-      const updatedSettings = {
-        timeSlotDuration: 15,
-        maxOrdersPerSlot: 8,
-        preOrderDaysAhead: 14,
-      };
-
-      const mockUpdatedSettings = {
-        id: "settings-1",
-        bakeryId: "bakery-123",
-        ...updatedSettings,
-        updatedAt: new Date(),
-      };
-
-      mockPrisma.settings.update.mockResolvedValue(mockUpdatedSettings);
-
-      const updateTimeSlotSettings = async (
-        bakeryId: string,
-        data: typeof updatedSettings,
-      ) => {
-        return await mockPrisma.settings.update({
-          where: { bakeryId },
-          data: {
-            ...data,
-            updatedAt: new Date(),
-          },
-        });
-      };
-
-      const result = await updateTimeSlotSettings(
-        "bakery-123",
-        updatedSettings,
-      );
-
-      expect(mockPrisma.settings.update).toHaveBeenCalledWith({
-        where: { bakeryId: "bakery-123" },
-        data: {
-          ...updatedSettings,
-          updatedAt: expect.any(Date),
+  describe("groupSlotsByDate", () => {
+    it("should group slots by date", () => {
+      const slots: TimeSlot[] = [
+        {
+          ...sampleSlot,
+          id: "slot-1",
+          startTime: new Date("2024-01-15T10:00:00"),
         },
-      });
-
-      expect(result).toEqual(mockUpdatedSettings);
-    });
-  });
-
-  describe("Time slot filtering and sorting", () => {
-    it("should filter available time slots", () => {
-      const timeSlots = [
-        { id: "1", maxOrders: 5, currentOrders: 2, isActive: true },
-        { id: "2", maxOrders: 5, currentOrders: 5, isActive: true }, // Full
-        { id: "3", maxOrders: 5, currentOrders: 1, isActive: false }, // Inactive
-        { id: "4", maxOrders: 5, currentOrders: 3, isActive: true },
+        {
+          ...sampleSlot,
+          id: "slot-2",
+          startTime: new Date("2024-01-15T11:00:00"),
+        },
+        {
+          ...sampleSlot,
+          id: "slot-3",
+          startTime: new Date("2024-01-16T10:00:00"),
+        },
       ];
 
-      const filterAvailableSlots = (slots: typeof timeSlots) => {
-        return slots.filter(
-          (slot) => slot.isActive && slot.currentOrders < slot.maxOrders,
-        );
-      };
+      const grouped = groupSlotsByDate(slots);
 
-      const availableSlots = filterAvailableSlots(timeSlots);
-
-      expect(availableSlots).toHaveLength(2);
-      expect(availableSlots.map((s) => s.id)).toEqual(["1", "4"]);
-    });
-
-    it("should sort time slots by occupancy rate", () => {
-      const timeSlots = [
-        { id: "1", maxOrders: 10, currentOrders: 8 }, // 80%
-        { id: "2", maxOrders: 10, currentOrders: 2 }, // 20%
-        { id: "3", maxOrders: 10, currentOrders: 5 }, // 50%
-      ];
-
-      const sortByOccupancy = (slots: typeof timeSlots) => {
-        return slots.sort((a, b) => {
-          const occupancyA = (a.currentOrders / a.maxOrders) * 100;
-          const occupancyB = (b.currentOrders / b.maxOrders) * 100;
-          return occupancyA - occupancyB;
-        });
-      };
-
-      const sortedSlots = sortByOccupancy([...timeSlots]);
-
-      expect(sortedSlots.map((s) => s.id)).toEqual(["2", "3", "1"]);
+      expect(Object.keys(grouped)).toHaveLength(2);
+      expect(grouped["2024-01-15"]).toHaveLength(2);
+      expect(grouped["2024-01-16"]).toHaveLength(1);
     });
   });
 
-  describe("Edge cases and error handling", () => {
-    it("should handle invalid time ranges", () => {
-      const params = {
-        startDate: new Date("2024-01-15T00:00:00Z"),
-        endDate: new Date("2024-01-15T00:00:00Z"),
-        startTime: "10:00",
-        endTime: "08:00", // End before start
-        duration: 30,
-        maxOrders: 5,
-        daysOfWeek: [1],
-        bakeryId: "bakery-123",
-      };
+  describe("getSlotDuration", () => {
+    it("should calculate slot duration correctly", () => {
+      const duration = getSlotDuration(sampleSlot);
+      expect(duration).toBe(15 * 60 * 1000); // 15 minutes in milliseconds
+    });
+  });
 
-      const slots = generateTimeSlots(params);
-
-      expect(slots).toHaveLength(0);
+  describe("isSlotDurationValid", () => {
+    it("should return true for valid duration", () => {
+      expect(isSlotDurationValid(sampleSlot, 15)).toBe(true);
     });
 
-    it("should handle duration longer than time range", () => {
-      const params = {
-        startDate: new Date("2024-01-15T00:00:00Z"),
-        endDate: new Date("2024-01-15T00:00:00Z"),
-        startTime: "08:00",
-        endTime: "08:30", // 30 minutes total
-        duration: 60, // 60 minutes duration
-        maxOrders: 5,
-        daysOfWeek: [1],
-        bakeryId: "bakery-123",
-      };
-
-      const slots = generateTimeSlots(params);
-
-      expect(slots).toHaveLength(0);
+    it("should return false for invalid duration", () => {
+      expect(isSlotDurationValid(sampleSlot, 30)).toBe(false);
     });
 
-    it("should handle zero max orders", () => {
-      const slot = { maxOrders: 0, currentOrders: 0 };
-
-      expect(validateTimeSlotAvailability(slot)).toBe(false);
-    });
-
-    it("should handle database errors gracefully", async () => {
-      mockPrisma.timeSlot.findMany.mockRejectedValue(
-        new Error("Database error"),
-      );
-
-      const findTimeSlotsForBakery = async (bakeryId: string) => {
-        try {
-          return await mockPrisma.timeSlot.findMany({
-            where: { bakeryId },
-          });
-        } catch (error) {
-          console.error("Error fetching time slots:", error);
-          return [];
-        }
-      };
-
-      const result = await findTimeSlotsForBakery("bakery-123");
-
-      expect(result).toEqual([]);
+    it("should use default minimum duration", () => {
+      expect(isSlotDurationValid(sampleSlot)).toBe(true);
     });
   });
 });

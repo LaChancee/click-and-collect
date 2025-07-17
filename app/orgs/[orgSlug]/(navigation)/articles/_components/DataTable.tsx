@@ -105,7 +105,7 @@ function EditableStockCell({ row }: { row: any }) {
           type="number"
           value={stockValue === null ? '' : stockValue}
           onChange={(e) => setStockValue(e.target.value === '' ? null : e.target.value)}
-          className="h-8 w-20 text-sm"
+          className="h-8 w-16 sm:w-20 text-sm"
           placeholder="Illimité"
           min="0"
           autoFocus
@@ -115,7 +115,7 @@ function EditableStockCell({ row }: { row: any }) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0"
+            className="h-7 w-7 p-0 touch-manipulation"
             onClick={handleSave}
             disabled={updateStockMutation.isPending}
           >
@@ -125,7 +125,7 @@ function EditableStockCell({ row }: { row: any }) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0"
+            className="h-7 w-7 p-0 touch-manipulation"
             onClick={handleCancel}
             disabled={updateStockMutation.isPending}
           >
@@ -142,7 +142,7 @@ function EditableStockCell({ row }: { row: any }) {
 
   return (
     <div className="flex items-center justify-between gap-2 group">
-      <div>
+      <div className="min-w-0 flex-1">
         {stockCount === null ? (
           <span className="text-sm text-muted-foreground">Illimité</span>
         ) : parseInt(stockCount as string) <= 0 ? (
@@ -160,7 +160,7 @@ function EditableStockCell({ row }: { row: any }) {
       <Button
         variant="ghost"
         size="sm"
-        className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 sm:group-hover:opacity-100 touch-manipulation transition-opacity"
         onClick={() => setIsEditing(true)}
       >
         <PencilIcon className="h-3.5 w-3.5" />
@@ -179,7 +179,7 @@ function ActionCell({ row }: { row: any }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 data-[state=open]:bg-muted">
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 data-[state=open]:bg-muted sm:h-8 sm:w-8">
           <span className="sr-only">Ouvrir le menu</span>
           <MoreHorizontal className="h-4 w-4" />
         </Button>
@@ -211,18 +211,18 @@ function ActionCell({ row }: { row: any }) {
 // Composant pour afficher l'image du produit
 function ImageCell({ imageUrl, name }: { imageUrl: string | null, name: string }) {
   return (
-    <div className="flex items-center justify-center h-14 w-14 relative">
+    <div className="flex items-center justify-center h-12 w-12 sm:h-14 sm:w-14 relative">
       {imageUrl ? (
         <Image
           src={imageUrl}
           alt={name || "Produit"}
           fill
           className="object-cover rounded-md"
-          sizes="56px"
+          sizes="(max-width: 640px) 48px, 56px"
         />
       ) : (
-        <div className="h-14 w-14 bg-muted rounded-md flex items-center justify-center">
-          <span className="text-xs text-muted-foreground">Aucune image</span>
+        <div className="h-12 w-12 sm:h-14 sm:w-14 bg-muted rounded-md flex items-center justify-center">
+          <span className="text-xs text-muted-foreground text-center">Aucune image</span>
         </div>
       )}
     </div>
@@ -339,11 +339,41 @@ export function DataTable({
 
     // Spécial rendering based on column type
     if (accessorKey === "name") {
-      return <div className="font-medium truncate max-w-[250px]">{row[accessorKey]}</div>;
+      return (
+        <div className="space-y-1">
+          <div className="font-medium truncate max-w-[200px] sm:max-w-[250px]">{row[accessorKey]}</div>
+          {/* Afficher la catégorie sur mobile si elle est cachée */}
+          <div className="md:hidden">
+            <Badge variant="secondary" className="font-normal text-xs">
+              {row.category}
+            </Badge>
+          </div>
+        </div>
+      );
     }
 
     if (accessorKey === "price") {
-      return <div className="tabular-nums">{formatCurrency(parseFloat(row[accessorKey]))}</div>;
+      return (
+        <div className="space-y-1">
+          <div className="tabular-nums font-medium">{formatCurrency(parseFloat(row[accessorKey]))}</div>
+          {/* Afficher le stock sur mobile si caché */}
+          <div className="lg:hidden">
+            {row.stockCount === null ? (
+              <span className="text-xs text-muted-foreground">Illimité</span>
+            ) : parseInt(row.stockCount as string) <= 0 ? (
+              <Badge variant="outline" className="text-xs border-red-200 text-red-700 bg-red-50">
+                Rupture
+              </Badge>
+            ) : parseInt(row.stockCount as string) < 10 ? (
+              <Badge variant="outline" className="text-xs border-amber-200 text-amber-700 bg-amber-50">
+                {row.stockCount} restant(s)
+              </Badge>
+            ) : (
+              <span className="text-xs text-muted-foreground">{row.stockCount} en stock</span>
+            )}
+          </div>
+        </div>
+      );
     }
 
     if (accessorKey === "category") {
@@ -395,13 +425,14 @@ export function DataTable({
 
   return (
     <div className="w-full">
-      <div className="mb-4 flex items-center justify-between">
-        <div className="relative">
+      {/* Contrôles responsive */}
+      <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="text"
             placeholder={searchPlaceholder}
-            className="w-full max-w-sm pl-9 bg-background border-border"
+            className="w-full pl-9 bg-background border-border"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
@@ -448,58 +479,79 @@ export function DataTable({
           </div>
         )}
       </div>
+
+      {/* Table responsive avec scroll horizontal */}
       <div className="rounded-md border overflow-hidden">
-        <table className="w-full caption-bottom text-sm">
-          <thead className="[&_tr]:border-b">
-            <tr className="border-b transition-colors bg-muted/40 hover:bg-muted/50">
-              <th className="h-12 w-12 px-4 text-left align-middle">
-                {renderCheckboxHeader()}
-              </th>
-              {columns.map((column: any) => (
-                <th
-                  key={column.id || column.accessorKey}
-                  className="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0"
-                >
-                  {renderHeader(column)}
+        <div className="overflow-x-auto">
+          <table className="w-full caption-bottom text-sm">
+            <thead className="[&_tr]:border-b">
+              <tr className="border-b transition-colors bg-muted/40 hover:bg-muted/50">
+                <th className="h-12 w-12 px-4 text-left align-middle">
+                  {renderCheckboxHeader()}
                 </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="[&_tr:last-child]:border-0">
-            {filteredData.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={columns.length + 1}
-                  className="p-4 text-center text-muted-foreground"
-                >
-                  Aucun résultat trouvé
-                </td>
+                {columns.map((column: any) => (
+                  <th
+                    key={column.id || column.accessorKey}
+                    className={`h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 ${
+                      // Cacher certaines colonnes sur mobile
+                      column.id === "image" ? "hidden sm:table-cell" : ""
+                      } ${column.accessorKey === "category" ? "hidden md:table-cell" : ""
+                      } ${column.accessorKey === "stockCount" ? "hidden lg:table-cell" : ""
+                      }`}
+                  >
+                    {renderHeader(column)}
+                  </th>
+                ))}
               </tr>
-            ) : (
-              filteredData.map((row: any, i: number) => (
-                <tr
-                  key={i}
-                  className="border-b transition-colors hover:bg-muted/50"
-                >
-                  <td className="p-4 align-middle">
-                    {renderCheckboxCell(row)}
+            </thead>
+            <tbody className="[&_tr:last-child]:border-0">
+              {filteredData.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={columns.length + 1}
+                    className="p-4 text-center text-muted-foreground"
+                  >
+                    Aucun résultat trouvé
                   </td>
-                  {columns.map((column: any) => (
-                    <td
-                      key={column.id || column.accessorKey}
-                      className="p-4 align-middle [&:has([role=checkbox])]:pr-0"
-                    >
-                      {renderCell(column, row)}
-                    </td>
-                  ))}
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                filteredData.map((row: any, i: number) => (
+                  <tr
+                    key={i}
+                    className="border-b transition-colors hover:bg-muted/50"
+                  >
+                    <td className="p-4 align-middle">
+                      {renderCheckboxCell(row)}
+                    </td>
+                    {columns.map((column: any) => (
+                      <td
+                        key={column.id || column.accessorKey}
+                        className={`p-4 align-middle [&:has([role=checkbox])]:pr-0 ${
+                          // Cacher certaines colonnes sur mobile
+                          column.id === "image" ? "hidden sm:table-cell" : ""
+                          } ${column.accessorKey === "category" ? "hidden md:table-cell" : ""
+                          } ${column.accessorKey === "stockCount" ? "hidden lg:table-cell" : ""
+                          }`}
+                      >
+                        {renderCell(column, row)}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-      <div className="text-xs text-muted-foreground mt-2 text-right">
-        {filteredData.length} élément{filteredData.length !== 1 ? 's' : ''}
+
+      {/* Informations sur les résultats */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-muted-foreground mt-2 gap-2">
+        <div>
+          {filteredData.length} élément{filteredData.length !== 1 ? 's' : ''}
+        </div>
+        <div className="sm:hidden text-muted-foreground">
+          Faites défiler horizontalement pour voir plus de colonnes
+        </div>
       </div>
 
       {/* Boîte de dialogue de confirmation pour la suppression */}

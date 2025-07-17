@@ -108,7 +108,7 @@ export default async function TimeSlotsPage(props: PageParams<{ orgSlug: string 
       <LayoutContent>
         <div className="space-y-6">
           {/* Statistiques rapides */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -176,13 +176,13 @@ export default async function TimeSlotsPage(props: PageParams<{ orgSlug: string 
           {settings && (
             <Card>
               <CardHeader>
-                <CardTitle>Paramètres actuels</CardTitle>
+                <CardTitle className="text-lg">Paramètres actuels</CardTitle>
                 <CardDescription>
                   Configuration des créneaux horaires pour votre boulangerie
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                   <div>
                     <div className="text-sm font-medium text-muted-foreground">
                       Ouverture
@@ -203,7 +203,7 @@ export default async function TimeSlotsPage(props: PageParams<{ orgSlug: string 
                   </div>
                   <div>
                     <div className="text-sm font-medium text-muted-foreground">
-                      Max commandes/créneau
+                      Commandes max/créneau
                     </div>
                     <div className="text-lg font-semibold">{settings.maxOrdersPerSlot}</div>
                   </div>
@@ -212,118 +212,63 @@ export default async function TimeSlotsPage(props: PageParams<{ orgSlug: string 
             </Card>
           )}
 
-          {/* Planning des créneaux */}
+          {/* Calendrier des créneaux */}
           <Card>
             <CardHeader>
-              <CardTitle>Planning des 7 prochains jours</CardTitle>
+              <CardTitle className="text-lg">Créneaux des 7 prochains jours</CardTitle>
               <CardDescription>
-                Visualisez et gérez vos créneaux horaires
+                Aperçu de vos créneaux horaires avec le nombre de commandes
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue={format(today, "yyyy-MM-dd")} className="w-full">
-                <TabsList className="grid w-full grid-cols-7">
-                  {nextDays.map((day) => (
-                    <TabsTrigger
-                      key={format(day, "yyyy-MM-dd")}
-                      value={format(day, "yyyy-MM-dd")}
-                      className="text-xs"
-                    >
-                      <div className="text-center">
-                        <div className="font-medium">
-                          {format(day, "EEE", { locale: fr })}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {format(day, "d")}
-                        </div>
-                      </div>
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-
+              <div className="space-y-6">
                 {nextDays.map((day) => {
                   const dayKey = format(day, "yyyy-MM-dd");
                   const daySlots = slotsByDay[dayKey] || [];
 
                   return (
-                    <TabsContent key={dayKey} value={dayKey} className="mt-6">
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-lg font-semibold">
-                            {format(day, "EEEE d MMMM yyyy", { locale: fr })}
-                          </h3>
-                          <Badge variant="outline">
-                            {daySlots.length} créneau{daySlots.length !== 1 ? "x" : ""}
-                          </Badge>
-                        </div>
-
-                        {daySlots.length === 0 ? (
-                          <div className="text-center py-8 text-muted-foreground">
-                            <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                            <p>Aucun créneau défini pour cette journée</p>
-                            <Button asChild className="mt-4" variant="outline">
-                              <a href={`/orgs/${orgSlug}/time-slots/generate?date=${dayKey}`}>
-                                Créer des créneaux
-                              </a>
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                            {daySlots.map((slot) => {
-                              const occupancyRate = (slot._count.orders / slot.maxOrders) * 100;
-                              const isAlmostFull = occupancyRate >= 80;
-                              const isFull = slot._count.orders >= slot.maxOrders;
-
-                              return (
-                                <Card
-                                  key={slot.id}
-                                  className={`transition-colors ${isFull
-                                    ? "border-red-200 bg-red-50"
-                                    : isAlmostFull
-                                      ? "border-orange-200 bg-orange-50"
-                                      : "border-green-200 bg-green-50"
-                                    }`}
-                                >
-                                  <CardContent className="p-4">
-                                    <div className="flex items-center justify-between mb-2">
-                                      <div className="font-medium">
-                                        {format(slot.startTime, "HH:mm")} -{" "}
-                                        {format(slot.endTime, "HH:mm")}
-                                      </div>
-                                      <Badge
-                                        variant={
-                                          isFull
-                                            ? "destructive"
-                                            : isAlmostFull
-                                              ? "secondary"
-                                              : "default"
-                                        }
-                                      >
-                                        {slot._count.orders}/{slot.maxOrders}
-                                      </Badge>
-                                    </div>
-                                    <div className="text-sm text-muted-foreground">
-                                      {slot._count.orders === 0
-                                        ? "Aucune commande"
-                                        : `${slot._count.orders} commande${slot._count.orders > 1 ? "s" : ""
-                                        }`}
-                                    </div>
-                                    {!slot.isActive && (
-                                      <Badge variant="outline" className="mt-2">
-                                        Inactif
-                                      </Badge>
-                                    )}
-                                  </CardContent>
-                                </Card>
-                              );
-                            })}
-                          </div>
-                        )}
+                    <div key={dayKey} className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-base">
+                          {format(day, "EEEE d MMMM yyyy", { locale: fr })}
+                        </h3>
+                        <Badge variant="secondary" className="text-xs">
+                          {daySlots.length} créneaux
+                        </Badge>
                       </div>
-                    </TabsContent>
+
+                      {daySlots.length > 0 ? (
+                        <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                          {daySlots.map((slot) => (
+                            <div
+                              key={slot.id}
+                              className={`p-3 rounded-lg border text-sm ${slot.isActive
+                                ? "bg-green-50 border-green-200"
+                                : "bg-gray-50 border-gray-200"
+                                }`}
+                            >
+                              <div className="font-medium">
+                                {format(slot.startTime, "HH:mm")} - {format(slot.endTime, "HH:mm")}
+                              </div>
+                              <div className="text-muted-foreground">
+                                {slot._count.orders} / {slot.maxOrders} commandes
+                              </div>
+                              {!slot.isActive && (
+                                <div className="text-red-600 text-xs mt-1">Inactif</div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <Calendar className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">Aucun créneau configuré pour ce jour</p>
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
-              </Tabs>
+              </div>
             </CardContent>
           </Card>
         </div>

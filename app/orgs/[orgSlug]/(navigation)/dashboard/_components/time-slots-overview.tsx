@@ -60,7 +60,7 @@ export async function TimeSlotsOverview() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Créneaux d'aujourd'hui</CardTitle>
+        <CardTitle className="text-lg">Créneaux d'aujourd'hui</CardTitle>
         <CardDescription>
           {todayTimeSlots.length} créneaux programmés
         </CardDescription>
@@ -79,10 +79,10 @@ export async function TimeSlotsOverview() {
 
               return (
                 <div key={slot.id} className="p-3 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-2">
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">
+                      <span className="font-medium text-sm">
                         {new Date(slot.startTime).toLocaleTimeString("fr-FR", {
                           hour: "2-digit",
                           minute: "2-digit"
@@ -95,18 +95,18 @@ export async function TimeSlotsOverview() {
 
                     <Badge
                       variant="secondary"
-                      className={`${slotStatus.color} ${slotStatus.bg}`}
+                      className={`${slotStatus.color} ${slotStatus.bg} text-xs`}
                     >
                       {getStatusLabel(slotStatus.status)}
                     </Badge>
                   </div>
 
-                  <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between text-sm text-muted-foreground mb-2 gap-1">
                     <span className="flex items-center gap-1">
                       <Users className="h-3 w-3" />
                       {slot.orders.length}/{slot.maxOrders} commandes
                     </span>
-                    <span>{Math.round(occupancyRate)}% occupé</span>
+                    <span className="text-xs">{Math.round(occupancyRate)}% occupé</span>
                   </div>
 
                   <Progress value={occupancyRate} className="h-2" />
