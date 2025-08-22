@@ -415,8 +415,12 @@ export function DataTable({
     return row[accessorKey];
   };
 
-  // Rendu pour l'en-tête
+  // Rendu pour l'en-tête - CORRECTION
   const renderHeader = (column: any) => {
+    if (typeof column.header === 'function') {
+      // Si c'est une fonction, on l'appelle avec un contexte minimal
+      return column.header({ column: {} });
+    }
     if (column.header === "Nom du produit" || column.header === "Prix") {
       return <HeaderCell title={column.header} />;
     }
