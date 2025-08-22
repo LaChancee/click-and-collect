@@ -1,9 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
-import { Clock, Package, User, Receipt, Phone, Mail, MapPin } from "lucide-react";
-import Link from "next/link";
+import { Clock, Package, Receipt } from "lucide-react";
 import { getRequiredCurrentOrg } from "@/lib/organizations/get-org";
 import { OrdersDataTable } from "./orders-data-table";
 

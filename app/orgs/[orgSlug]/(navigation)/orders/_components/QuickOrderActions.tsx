@@ -118,11 +118,6 @@ export function QuickOrderActions({
 
   return (
     <div className="space-y-2">
-      {/* Statut actuel */}
-      <div className="text-center">
-        {getStatusBadge(currentStatus)}
-      </div>
-
       {/* Interface tablette : Boutons grands et simples */}
       <div className="block lg:hidden space-y-2">
         {availableActions.map((action) => {
