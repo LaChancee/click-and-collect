@@ -133,6 +133,10 @@ export const auth = betterAuth({
   },
   socialProviders: SocialProviders,
   plugins: [
+    organization({
+      ac,
+      roles,
+    }),
     magicLink({
       sendMagicLink: async ({ email, url }) => {
         await sendEmail({
@@ -151,37 +155,9 @@ export const auth = betterAuth({
         });
       },
     }),
-    organization({
-      ac: ac,
-      roles: roles,
-      // Définit la limit d'organization à 1
-      organizationLimit: 1,
-      // Définit la limit de membership à 1
-      membershipLimit: 1,
-      schema: {
-        organization: {
-          fields: {
-            email: "string",
-          },
-        },
-      },
-    }),
     stripePlugin({
-      stripe: stripe,
       paymentPlans: AUTH_PLANS,
       webhookSecret: env.STRIPE_WEBHOOK_SECRET,
-      async onCustomerCreated(customer, user) {
-        logger.info("Customer created", { customer, user });
-      },
-      async onSubscriptionCreated(subscription, user) {
-        logger.info("Subscription created", { subscription, user });
-      },
-      async onSubscriptionUpdated(subscription, user) {
-        logger.info("Subscription updated", { subscription, user });
-      },
-      async onInvoicePaid(invoice, subscription, user) {
-        logger.info("Invoice paid", { invoice, subscription, user });
-      },
     }),
   ],
 });
