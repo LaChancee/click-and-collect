@@ -2,6 +2,7 @@
 const nextConfig = {
   experimental: {
     optimizePackageImports: ["@radix-ui/react-icons"],
+    authInterrupts: true,
   },
   serverExternalPackages: ["stripe", "better-auth"],
   typescript: {

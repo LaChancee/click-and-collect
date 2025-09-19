@@ -1,6 +1,5 @@
-import { SidebarUserButtonClient } from "./sidebar-user-button-client";
+import { SidebarUserButtonWrapper } from "./sidebar-user-button-wrapper";
 
 export function SidebarUserButtonServer() {
-  // Version simplifiée qui retourne directement le composant client
-  return <SidebarUserButtonClient />;
+  return <SidebarUserButtonWrapper />;
 } 

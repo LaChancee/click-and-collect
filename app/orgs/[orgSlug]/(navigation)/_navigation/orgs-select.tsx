@@ -5,6 +5,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -13,9 +14,10 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import type { AuthOrganization } from "@/lib/auth/auth-type";
-import { Plus } from "lucide-react";
+import { Plus, User, ChefHat } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 
 type OrganizationsSelectProps = {
@@ -28,6 +30,23 @@ export const OrgsSelect = (props: OrganizationsSelectProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const org = props.orgs.find((org) => org.slug === props.currentOrgSlug);
+  const isInAccountSpace = pathname.startsWith('/account');
+  const [isBakery, setIsBakery] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Vérifier si l'utilisateur est une boulangerie
+  useEffect(() => {
+    fetch("/api/auth/verify-user-type")
+      .then((res) => res.json())
+      .then((data) => {
+        setIsBakery(data.isBakery);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setIsBakery(false);
+        setIsLoading(false);
+      });
+  }, []);
 
   return (
     <SidebarMenu>
@@ -39,53 +58,64 @@ export const OrgsSelect = (props: OrganizationsSelectProps) => {
               variant="default"
               size="lg"
             >
-              {org ? (
+              {isInAccountSpace ? (
                 <span className="inline-flex w-full items-center gap-2">
-                  <Avatar className="size-6 object-contain">
-                    <AvatarFallback>
-                      {org.name.slice(0, 1).toUpperCase()}
-                    </AvatarFallback>
-                    {org.logo ? <AvatarImage src={org.logo} /> : null}
-                  </Avatar>
+                  <div className="size-6 rounded-md bg-blue-100 flex items-center justify-center">
+                    <User className="size-4 text-blue-600" />
+                  </div>
+                  <span className="line-clamp-1 text-left">Mon espace client</span>
+                </span>
+              ) : org ? (
+                <span className="inline-flex w-full items-center gap-2">
+                  <div className="size-6 rounded-md bg-orange-100 flex items-center justify-center">
+                    <ChefHat className="size-4 text-orange-600" />
+                  </div>
                   <span className="line-clamp-1 text-left">{org.name}</span>
                 </span>
               ) : (
-                <span>Open organization</span>
+                <span>Sélectionner un espace</span>
               )}
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-[--radix-popper-anchor-width]">
+            {/* Option Espace Client - s'affiche seulement pour les clients (pas les boulangeries) */}
+            {!isLoading && !isBakery && !isInAccountSpace && (
+              <>
+                <DropdownMenuItem asChild>
+                  <Link href="/account" className="inline-flex w-full items-center gap-2">
+                    <div className="size-6 rounded-md bg-blue-100 flex items-center justify-center">
+                      <User className="size-4 text-blue-600" />
+                    </div>
+                    <span className="line-clamp-1 text-left">Mon espace client</span>
+                  </Link>
+                </DropdownMenuItem>
+                {props.orgs.length > 0 && <DropdownMenuSeparator />}
+              </>
+            )}
+
+            {/* Boulangeries de l'utilisateur */}
             {props.orgs
-              .filter((org) => org.slug !== props.currentOrgSlug)
+              .filter((org) => isInAccountSpace || org.slug !== props.currentOrgSlug)
               .map((org) => {
                 if (typeof window === "undefined") return null;
 
-                const href = props.currentOrgSlug
-                  ? pathname.replace(
-                      `/orgs/${props.currentOrgSlug}`,
-                      `/orgs/${org.slug}`,
-                    )
-                  : `/orgs/${org.slug}`;
+                const href = `/orgs/${org.slug}`;
 
                 return (
                   <DropdownMenuItem key={org.slug} asChild>
                     <Link
                       href={href}
-                      key={org.slug}
                       className="inline-flex w-full items-center gap-2"
                     >
-                      <Avatar className="size-6">
-                        <AvatarFallback>
-                          {org.name.slice(0, 1).toUpperCase()}
-                        </AvatarFallback>
-                        {org.image ? <AvatarImage src={org.image} /> : null}
-                      </Avatar>
-                      <span className="line-clamp-1 text-left">{href}</span>
+                      <div className="size-6 rounded-md bg-orange-100 flex items-center justify-center">
+                        <ChefHat className="size-4 text-orange-600" />
+                      </div>
+                      <span className="line-clamp-1 text-left">{org.name}</span>
                     </Link>
                   </DropdownMenuItem>
                 );
               })}
-           {/* <DropdownMenuItem
+            {/* <DropdownMenuItem
               onClick={() => {
                 router.push("/orgs/new");
               }}

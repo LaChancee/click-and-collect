@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { User, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { UserAuthButtonWrapper } from "./UserAuthButtonWrapper";
 
 interface Category {
   id: string;
@@ -30,6 +29,7 @@ interface SidebarMenuProps {
   bakery: Bakery;
 }
 
+
 export function SidebarMenu({ categories, bakery }: SidebarMenuProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
@@ -52,15 +52,9 @@ export function SidebarMenu({ categories, bakery }: SidebarMenuProps) {
   return (
     <div className="hidden lg:block w-80 flex-shrink-0">
       <div className="bg-white rounded-lg overflow-hidden">
-        {/* Bouton de connexion */}
+        {/* Bouton utilisateur */}
         <div className="p-4 border-b border-gray-200 bg-white">
-          <Link
-            href="/auth"
-            className="w-full bg-gray-900 text-white px-4 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
-          >
-            <User className="w-4 h-4" />
-            Se connecter
-          </Link>
+          <UserAuthButtonWrapper bakery={bakery} />
         </div>
 
         {/* Informations de la boulangerie */}

@@ -22,21 +22,8 @@ async function signOutAction() {
 }
 
 export default async function RouteLayout(props: LayoutParams) {
-  const user = await getRequiredUser();
   return (
     <Layout>
-      <LayoutHeader>
-        <LayoutTitle>
-          {user.name ? `${user.name}'s` : "Your"} Settings
-        </LayoutTitle>
-      </LayoutHeader>
-      <LayoutActions>
-        <form action={signOutAction}>
-          <SubmitButton>
-            Sign out
-          </SubmitButton>
-        </form>
-      </LayoutActions>
       <LayoutContent>{props.children}</LayoutContent>
     </Layout>
   );

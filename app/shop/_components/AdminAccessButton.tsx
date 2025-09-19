@@ -77,7 +77,8 @@ function AdminAccessButtonInternal({ bakery }: AdminAccessButtonProps) {
     );
   }
 
-  // Utilisateur connecté mais pas propriétaire - rien à afficher
+  // Utilisateur connecté mais pas propriétaire - ne rien afficher
+  // Les boulangeries ne peuvent pas accéder à l'espace client
   return null;
 }
 
