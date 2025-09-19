@@ -37,7 +37,7 @@ export const generateTimeSlotsAction = orgAction
     if (replaceExisting) {
       await prisma.timeSlot.deleteMany({
         where: {
-          bakeryId: ctx.user.id,
+          bakeryId: ctx.id,
           startTime: {
             gte: startOfDay(start),
             lte: addDays(startOfDay(end), 1),
@@ -76,7 +76,7 @@ export const generateTimeSlotsAction = orgAction
           if (!replaceExisting) {
             const existingSlot = await prisma.timeSlot.findFirst({
               where: {
-                bakeryId: ctx.user.id,
+                bakeryId: ctx.id,
                 startTime: slotStartTime,
                 endTime: slotEndTime,
               },
@@ -93,7 +93,7 @@ export const generateTimeSlotsAction = orgAction
             endTime: slotEndTime,
             maxOrders,
             isActive: true,
-            bakeryId: ctx.user.id,
+            bakeryId: ctx.id,
           });
 
           currentMinutes += duration;
