@@ -56,8 +56,8 @@ function AdminAccessButtonInternal({ bakery }: AdminAccessButtonProps) {
   if (!session?.user) {
     // Utilisateur non connecté - bouton de connexion
     return (
-      <Link href="/auth" className="inline-flex">
-        <Button variant="outline" size="sm" className="gap-2">
+      <Link href="/auth/signin" className="inline-flex">
+        <Button variant="outline" size="sm" className="gap-2 bg-white">
           <User className="w-4 h-4" />
           Connexion
         </Button>

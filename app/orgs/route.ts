@@ -1,4 +1,4 @@
-import { getUser } from "@/lib/auth/auth-user";
+import { getBakeryUser, getUser } from "@/lib/auth/auth-user";
 import { prisma } from "@/lib/prisma";
 import { getServerUrl } from "@/lib/server-url";
 import { NextResponse } from "next/server";
@@ -16,6 +16,15 @@ export const GET = async () => {
     return NextResponse.redirect(`${getServerUrl()}/auth/signin`);
   }
 
+  // Vérifier si l'utilisateur est une boulangerie
+  const bakeryUser = await getBakeryUser();
+
+  if (bakeryUser) {
+    // Rediriger vers l'espace boulangerie
+    return NextResponse.redirect(`${getServerUrl()}/orgs/${bakeryUser.bakery.slug}`);
+  }
+
+  // Pour les clients normaux, vérifier s'ils ont une organisation
   const organization = await prisma.organization.findFirst({
     where: {
       members: {
@@ -30,9 +39,10 @@ export const GET = async () => {
     },
   });
 
-  if (!organization) {
-    return NextResponse.redirect(`${getServerUrl()}/orgs/new`);
+  if (organization) {
+    return NextResponse.redirect(`${getServerUrl()}/orgs/${organization.slug}`);
   }
 
-  return NextResponse.redirect(`${getServerUrl()}/orgs/${organization.slug}`);
+  // Les clients sans organisation sont redirigés vers la page d'accueil (boutique)
+  return NextResponse.redirect(`${getServerUrl()}/`);
 };

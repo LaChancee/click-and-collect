@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Divider } from "@/components/nowts/divider";
 import { SocialProviders } from "@/lib/auth";
 import { getUser } from "@/lib/auth/auth-user";
 import { SiteConfig } from "@/site-config";
@@ -14,7 +15,8 @@ import type { PageParams } from "@/types/next";
 import { ArrowLeft, ChefHat, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { SignInProviders } from "./sign-in-providers";
+import { ProviderButton } from "./provider-button";
+import { UnifiedAuthForm } from "./unified-auth-form";
 
 export default async function AuthSignInPage(props: PageParams) {
   const user = await getUser();
@@ -24,6 +26,8 @@ export default async function AuthSignInPage(props: PageParams) {
   }
 
   const providers = Object.keys(SocialProviders ?? {});
+  const searchParams = await props.searchParams;
+  const callbackUrl = searchParams?.callbackUrl as string;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -46,22 +50,27 @@ export default async function AuthSignInPage(props: PageParams) {
                 <ShoppingBag className="h-8 w-8 text-blue-600" />
               </div>
             </div>
-            <CardTitle className="text-xl">Connexion Client</CardTitle>
+            <CardTitle className="text-xl">Espace Client</CardTitle>
             <CardDescription>
-              Connectez-vous pour commander en Click & Collect
+              Connectez-vous ou créez un compte pour commander
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <SignInProviders providers={providers} />
+            <UnifiedAuthForm callbackUrl={callbackUrl} />
 
-            <div className="text-center">
-              <p className="text-sm text-gray-600 mb-4">
-                Vous n'avez pas encore de compte client ?
-              </p>
-              <p className="text-xs text-gray-500">
-                L'inscription se fait automatiquement lors de votre première commande
-              </p>
-            </div>
+            {providers.length > 0 && (
+              <>
+                <Divider>ou</Divider>
+                <div className="flex flex-col gap-2">
+                  {providers.includes("github") ? (
+                    <ProviderButton providerId="github" callbackUrl={callbackUrl} />
+                  ) : null}
+                  {providers.includes("google") ? (
+                    <ProviderButton providerId="google" callbackUrl={callbackUrl} />
+                  ) : null}
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 

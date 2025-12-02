@@ -68,7 +68,7 @@ export default async function HomePage(props: PageParams) {
               <p className="text-sm text-blue-700 mb-3">
                 Créez votre compte dès maintenant pour être prêt dès l'ouverture !
               </p>
-              <Link href="/auth/signup">
+              <Link href="/auth/signin">
                 <Button variant="outline" className="w-full border-blue-300 text-blue-700 hover:bg-blue-100">
                   Créer mon compte client
                 </Button>

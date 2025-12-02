@@ -62,7 +62,7 @@ export function UserAuthButton({ bakery }: UserAuthButtonProps) {
     // Utilisateur non connecté - bouton de connexion
     return (
       <Link
-        href="/auth"
+        href="/auth/signin"
         className="w-full bg-gray-900 text-white px-4 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
       >
         <User className="w-4 h-4" />
