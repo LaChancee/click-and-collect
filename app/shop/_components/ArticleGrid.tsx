@@ -235,7 +235,7 @@ export function ArticleGrid({ articles, categories, bakery, mealDeals = [] }: Ar
                   >
                     <div className="relative">
                       {/* Image */}
-                      <div className="aspect-[3/2] bg-gray-100 overflow-hidden">
+                      <div className="aspect-[4/3] sm:aspect-[3/2] bg-gray-100 overflow-hidden">
                         {article.imageUrl || article.image ? (
                           <Image
                             src={article.imageUrl || article.image || ''}
@@ -246,7 +246,7 @@ export function ArticleGrid({ articles, categories, bakery, mealDeals = [] }: Ar
                               }`}
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-6xl">
+                          <div className="w-full h-full flex items-center justify-center text-4xl sm:text-6xl">
                             🍞
                           </div>
                         )}

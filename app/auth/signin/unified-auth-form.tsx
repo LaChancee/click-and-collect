@@ -42,8 +42,9 @@ type SignUpFormType = z.infer<typeof SignUpSchema>;
 
 export const UnifiedAuthForm = (props: {
   callbackUrl?: string;
+  defaultMode?: "signin" | "signup";
 }) => {
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup">(props.defaultMode || "signin");
   const [isUsingCredentials, setIsUsingCredentials] = useLocalStorage(
     "sign-in-with-credentials",
     true,

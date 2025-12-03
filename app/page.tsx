@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import type { PageParams } from "@/types/next";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ChefHat, Store, ArrowRight } from "lucide-react";
+import { Store, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export default async function HomePage(props: PageParams) {
@@ -44,36 +44,17 @@ export default async function HomePage(props: PageParams) {
             </h1>
             <p className="text-gray-600 mb-6">
               Notre service Click & Collect sera bientôt en ligne.
-              En attendant, vous pouvez créer votre compte boulangerie.
+              Créez votre compte dès maintenant pour être prêt dès l'ouverture !
             </p>
           </div>
 
           <div className="space-y-4">
-            <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-              <h3 className="font-semibold text-amber-800 mb-2">🥖 Vous êtes boulanger ?</h3>
-              <p className="text-sm text-amber-700 mb-3">
-                Rejoignez notre plateforme et proposez vos délicieux produits en Click & Collect !
-              </p>
-              <Link href="/auth/bakery">
-                <Button className="w-full bg-orange-600 hover:bg-orange-700">
-                  <ChefHat className="w-4 h-4 mr-2" />
-                  Créer mon compte boulangerie
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
-            </div>
-
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <h3 className="font-semibold text-blue-800 mb-2">👤 Vous êtes client ?</h3>
-              <p className="text-sm text-blue-700 mb-3">
-                Créez votre compte dès maintenant pour être prêt dès l'ouverture !
-              </p>
-              <Link href="/auth/signin">
-                <Button variant="outline" className="w-full border-blue-300 text-blue-700 hover:bg-blue-100">
-                  Créer mon compte client
-                </Button>
-              </Link>
-            </div>
+            <Link href="/auth/signin">
+              <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                Créer mon compte
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
           </div>
 
           <div className="mt-6 pt-6 border-t border-gray-200">

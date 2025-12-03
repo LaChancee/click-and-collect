@@ -1,3 +1,5 @@
+"use client";
+
 import { Logo } from "@/components/nowts/logo";
 import { LoadingButton } from "@/features/form/submit-button";
 import { authClient } from "@/lib/auth-client";

@@ -51,7 +51,7 @@ export function SidebarMenu({ categories, bakery }: SidebarMenuProps) {
 
   return (
     <div className="hidden lg:block w-80 flex-shrink-0">
-      <div className="bg-white rounded-lg overflow-hidden">
+      <div className="bg-white rounded-lg overflow-hidden sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
         {/* Bouton utilisateur */}
         <div className="p-4 border-b border-gray-200 bg-white">
           <UserAuthButtonWrapper bakery={bakery} />
