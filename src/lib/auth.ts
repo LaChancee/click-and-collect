@@ -43,6 +43,11 @@ export const auth = betterAuth({
     provider: "postgresql",
   }),
   baseURL: getServerUrl(),
+  secret: env.BETTER_AUTH_SECRET,
+  trustedOrigins: [
+    "https://les-delices-d-erwann.vercel.app",
+    "http://localhost:3000"
+  ],
   databaseHooks: {
     user: {
       create: {

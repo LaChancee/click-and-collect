@@ -33,11 +33,10 @@ export function CategoryTabs({ categories, hasMealDeals = false }: CategoryTabsP
     if (categorySlug === "all") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      // Corriger l'ID pour qu'il corresponde à ce qui est utilisé dans ArticleGrid
       const element = document.getElementById(categorySlug);
       if (element) {
-        const headerHeight = 180; // Hauteur du header sticky
-        const elementPosition = element.offsetTop - headerHeight;
+        const headerHeight = 120; // Hauteur du header + tabs sticky
+        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset - headerHeight;
         window.scrollTo({ top: elementPosition, behavior: "smooth" });
       }
     }

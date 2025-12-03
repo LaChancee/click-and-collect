@@ -40,10 +40,10 @@ export function SidebarMenu({ categories, bakery }: SidebarMenuProps) {
     if (categorySlug === "all") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      const element = document.getElementById(`category-${categorySlug}`);
+      const element = document.getElementById(categorySlug);
       if (element) {
-        const headerHeight = 200; // Hauteur approximative du header
-        const elementPosition = element.offsetTop - headerHeight;
+        const headerHeight = 120; // Hauteur du header
+        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset - headerHeight;
         window.scrollTo({ top: elementPosition, behavior: "smooth" });
       }
     }
