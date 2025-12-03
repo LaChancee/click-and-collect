@@ -10,7 +10,6 @@ import { GeistSans } from "geist/font/sans";
 import type { Metadata, Viewport } from "next";
 import { Space_Grotesk } from "next/font/google";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
-import type { ReactNode } from "react";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -43,8 +42,7 @@ const CaptionFont = Space_Grotesk({
 
 export default function RootLayout({
   children,
-  modal,
-}: LayoutParams & { modal?: ReactNode }) {
+}: LayoutParams) {
   return (
     <>
       <html lang="en" className="h-full" suppressHydrationWarning>
@@ -65,7 +63,6 @@ export default function RootLayout({
                 color="hsl(var(--primary))"
               />
               {children}
-              {modal}
               <TailwindIndicator />
               <FloatingLegalFooter />
             </Providers>
